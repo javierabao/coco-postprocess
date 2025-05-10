@@ -226,8 +226,8 @@ def load(filename):
     """
     return _DataSetList(official_archives.all.get_extended(_StringList(filename)))
 
-def load2(args, keep=None, remove=None):
-    """[WIP] return a `dict` of `dict` of `DataSetLists` with dimension and pathname as keys.
+def load2(args, keep=None, remove=None, flat_list=None):
+    """[WIP] return a `DataSetList` or a `dict` of `dict` of `DataSetLists`.
 
     `args` is a string or a list of strings passed to
     `cocopp.official_archives.all.get_extended` to determine the desired
@@ -239,7 +239,20 @@ def load2(args, keep=None, remove=None):
     example). In case, `remove` takes precedent. When ``keep is None`` all
     elements are kept unless removed.
 
+    return a `DataSetList` if either `flat_list` or ``flat_list is None``
+    and `args` describes a single algorithm/experiment, return otherwise a
+    `dict` of `dict` with dimension and pathname as keys, respectively.
+
     Examples:
+    ::
+
+        # Get a single `DataSet`, here for F1 in 20-D
+        >> ds = cocopp.load2('nelder!').by('dim')[20].by('funcId')[1][0]
+
+        # get 31 data sets, takes ~3 minutes at first ever loading
+        >> ddsl31 = load('bbob/2009/*')
+        >> assert sorted(ddsl31) == [2, 3, 5, 10, 20, 40], ddsl
+        >> assert len(ddsl31[3]) == 31, ddsl
 
     >>> import cocopp
     >>> def pprldmany(dsl):
@@ -257,12 +270,6 @@ def load2(args, keep=None, remove=None):
     >>> pprldmany(ddsl[2])  # doctest:+ELLIPSIS
     OK...
 
-    ::
-
-        >> ddsl31 = load('bbob/2009/*')  # 31 data sets, takes ~3 minutes at first ever loading
-        >> assert sorted(ddsl31) == [2, 3, 5, 10, 20, 40], ddsl
-        >> assert len(ddsl31[3]) == 31, ddsl
-
     """
     args2 = official_archives.all.get_extended(args)
     dsList, _sortedAlgs, dictAlg = _pproc.processInputArgs(args2, True)  # takes ~1 minutes per 10 data sets
@@ -271,8 +278,10 @@ def load2(args, keep=None, remove=None):
         dsList2.filter(keep)
     if remove:
         dsList2.remove_if(remove)
+    _config.config()  # make sure that the filtered settings are taken into account?
     dictAlg = dsList2.dictByAlgName()
-    _config.config() # make sure that the filtered settings are taken into account?
+    if flat_list or (flat_list is None and len(dictAlg) == 1):
+        return dsList2
     return _pproc.dictAlgByDim(dictAlg)
 
 # info on the DataSetList: algId, function, dim
