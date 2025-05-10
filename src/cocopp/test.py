@@ -27,8 +27,6 @@ from cocopp import archiving
 
 import matplotlib  # just to make sure the following is actually done first
 
-matplotlib.use('Agg')  # To avoid window popup and use without X forwarding
-
 if sys.version_info[0] >= 3:
     from urllib.request import urlretrieve
 else:
@@ -511,6 +509,7 @@ def do_doctest():
 """
 
 if __name__ == "__main__":
+    matplotlib.use('Agg')  # To avoid window popup and use without X forwarding
     if 'doctest' in sys.argv or 'doctests' in sys.argv:
         do_doctest()
     else:

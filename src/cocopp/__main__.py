@@ -14,13 +14,13 @@ except:
     is_module = False
 import matplotlib  # just to make sure the following is actually done first
 
-matplotlib.use('Agg')  # To avoid window popup and use without X forwarding
 
 
 def main():
     r"""Currently it does nothing.
 
     """
+    matplotlib.use('Agg')  # To avoid window popup and use without X forwarding
 
 if __name__ == "__main__":
     """run either tests or rungeneric.main"""

@@ -94,8 +94,8 @@ from __future__ import absolute_import
 import sys as _sys
 
 import matplotlib  # just to make sure the following is actually done first
-matplotlib.use('Agg')  # To avoid window popup and use without X forwarding
-del matplotlib
+# matplotlib.use('Agg')  # To avoid window popup and use without X forwarding
+# del matplotlib
 
 from numpy.random import seed as set_seed
 

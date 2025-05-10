@@ -30,7 +30,6 @@ from .compall import ppfigs
 import matplotlib.pyplot as plt
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
-matplotlib.use('Agg')  # To avoid window popup and use without X forwarding
 
 __all__ = ['main']
 
@@ -262,6 +261,8 @@ def main(argv=None):
         if not args:
             usage()
             sys.exit()
+
+        matplotlib.use('Agg')  # To avoid window popup and use without X forwarding
 
         testbedsettings.reset_current_testbed()
         testbedsettings.reset_reference_values()
