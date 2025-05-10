@@ -2289,7 +2289,7 @@ class DataSet(object):
 
     def plot(self, plot_function=plt.semilogy, smallest_target=8e-9,
              median_formats=(('linestyle', '--'), ), color_map=None,
-             plot_formats=(), **kwargs):
+             plot_formats=(), **plot_kwargs):
         """plot all data from `evals` attribute and the median.
 
         Plotted are Delta f-value vs evaluations. The sort for the color
@@ -2301,27 +2301,38 @@ class DataSet(object):
         `matplotlib.cm`. Default is `brg` between 0 and 0.5, like
         ``plt.cm.brg(np.linspace(0, 0.5, self.nbRuns()))``.
 
-        `**kwargs` is updated with `plot_formats` and passed to
+        `**plot_kwargs` is updated with `plot_formats` and passed to
         `plot_function` (for convenience).
+
+        Small dots indicate the last evaluation for runs that did no reach
+        the final/smallest target.
         """
         if smallest_target > self.evals[0, 0]:
             raise ValueError("smallest_target=%f argument is larger than the largest recorded target %f"
                 % (smallest_target, self.evals[0, 0]))
-        plot_kwargs = kwargs
-        kwargs.update(plot_formats)
+        plot_kwargs.update(plot_formats)
         median_kwargs = dict(median_formats)
         plot_kwargs.setdefault('clip_on', False)  # doesn't help
         plot_kwargs.setdefault('linewidth', 0.5)
+        plot_kwargs.setdefault('marker', '.')
         colors = None if 'color' in plot_kwargs else (
             iter(color_map or plt.cm.brg(np.linspace(0, 0.5, self.nbRuns()))))
         #   iter(plt.cm.plasma(np.linspace(0, 0.7, self.nbRuns()))))
         median_kwargs.setdefault('color', plot_kwargs.get('color', 'black'))
+        # max_plotted_eval = np.nanmax(self.evals[:,1:])
+        final_evals = self.detEvals([np.max([self.precision, smallest_target])])[0]
         for i in self._argsort(smallest_target):  # ranges from 1 to nbRuns included
             evals = self.evals.T[i]  # i == 0 are the target values
-            idx = np.logical_and(self.evals[:, 0] >= smallest_target, np.isfinite(evals))
+            idx = np.logical_and(self.evals[:, 0] >= smallest_target,
+                                 np.isfinite(evals))
             if colors:
                 plot_kwargs['color'] = next(colors)
             plot_function(evals[idx], self.evals[idx, 0], **plot_kwargs)
+            if not np.isfinite(final_evals[i-1]):
+                plot_function(self.maxevals[i-1],  # max_plotted_eval
+                              # self.evals[sum(np.isfinite(self.evals[:, i])) - 1, 0],
+                              self.funvals[-1, i],
+                              '.', color=plot_kwargs['color'], markersize=1.5)
         # plot median
         xmedian = self.median_evals()
         idx = np.logical_and(self.evals[:, 0] >= smallest_target, np.isfinite(xmedian))
@@ -2335,7 +2346,7 @@ class DataSet(object):
         plt.xlabel('function evaluations')
         plt.xlim(left=0.85)  # right=max(self.maxevals)
         plt.ylim(bottom=smallest_target if smallest_target is not None else self.precision)
-        plt.title("F %d in dimension %d" % (self.funcId, self.dim))
+        plt.title("%s: F%d in dimension %d" % (self.algId[:33], self.funcId, self.dim))
         plt.grid(True)
         return plt.gca()  # not sure which makes most sense
 
