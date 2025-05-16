@@ -58,44 +58,80 @@ def _str_to_colormap(s, len_):
     return iter(mpl.colors.to_hex(c) for c in
                     plt.get_cmap(cvals[0])(np.linspace(c0, c1, len_)))
 
-def _index_after_parameter(name, return_first_digit_index=False):
-    """return the first index after a sequence indicating a positive float.
+def _index_after_float(name, return_first_digit_index=False):
+    """return the first index after the first subsequence indicating a `float`
 
-    In particular, `1.23` or `1.2e-3` are correctly identified as a float.
+    in `name`. The subsequence must contain either `'.'` or `e` (the latter
+    cannot be trailing as part of the float). In particular, `.1`, `-.2`,
+    `1.23`, `-2e0` or `1.2e-3` are identified as a float.
 
     If `return_first_digit_index`, the index of the first digit is returned
     instead of the first index after the float.
+
+    >>> import cocopp
+    >>> floats = ['.1', '-.2', '1.23', '-2e0', '1.2e-3', 'a', 'bb']
+    >>> for i, f in enumerate(floats):
+    ...     print(cocopp.config._index_after_float(i * 's' + f + (i + 2) * 'b', True),
+    ...           cocopp.config._index_after_float(i * 's' + f + 1 * i * 'b'))
+    0 2
+    1 4
+    2 6
+    3 7
+    4 10
+    -1 0
+    -1 0
+
     """
-    found = False
+    found = [False, False]  # found digit, found dot or e+digit
     exponent = False
-    accept_minus = False  # allow to read a minus in the exponent
-    for i in range(len(name)):
+    accept_minus = True  # allow to read a minus in the exponent
+    first_digit_index = -1
+    last_digit_index = -1
+    i = -1
+    while i < len(name):
+        i += 1
+        if i == len(name):  # return is copy-paste from below
+            return first_digit_index if return_first_digit_index else (
+                    last_digit_index + 1)
         if '0' <= name[i] <= '9' or (
-                name[i] == '.' and not exponent) or (
+                name[i] == '.' and not exponent and not found[1]) or (
                 accept_minus and name[i] == '-'):
-            found = True
-            if return_first_digit_index:
-                return i
-            accept_minus = False  # accept only once directly after 'e'
+            if name[i] == '.' or (exponent and name[i] != '-'):
+                found[1] = True
+            elif not exponent:
+                found[0] = True
+            if name[i] != '-':
+                last_digit_index = i
+            if first_digit_index == -1:
+                first_digit_index = i
+            accept_minus = False  # accept always only once
             continue
-        elif found and not exponent and name[i].lower() == 'e':
+        elif found[0] and not exponent and name[i].lower() == 'e':
             exponent = True
             accept_minus = True
             continue
-        elif found:
-            return i if name[i-1].lower() != 'e' else i - 1
-    return -1
+        elif any(found):
+            if all(found):
+                return first_digit_index if return_first_digit_index else (
+                       last_digit_index + 1)
+            # reset
+            i -= 1
+            found = [False, False]
+            exponent = False
+            accept_minus = True  # allow to read a minus in the exponent
+            first_digit_index = -1
+            last_digit_index = -1            
+    return -1 if return_first_digit_index else 0
 
 def map_indices_to_line_styles(names):
     """helper function for `config_line_styles`.
 
-    Map each index of names to the index of the first appearence of the
+    Map each index of names to the index of the first appearance of the
     name, where equality of names is determined starting from after a float
-    number (which represents a parameter value) using
-    `_index_after_parameter`.
+    number (which represents a parameter value) using `_index_after_float`.
     """
-    # names without preceeding float number
-    nn = [name[_index_after_parameter(name):] for name in names]
+    # names without preceding float number
+    nn = [name[_index_after_float(name):] for name in names]
     res = {k: nn.index(v) for k, v in enumerate(nn)}  # index gives the first match
     return res
 
@@ -108,7 +144,7 @@ def sorted_line_styles(styles, names, indices):
     increasing order w.r.t. the sorting of ``names[indices]``.
     """
     def sort_key(i):
-        i0, i1 = _index_after_parameter(names[i], True), _index_after_parameter(names[i])
+        i0, i1 = _index_after_float(names[i], True), _index_after_float(names[i])
         return names[i][:i0], float(names[i][i0:i1])
 
     sorted_indices = sorted(indices, key=sort_key)
@@ -153,10 +189,10 @@ def config_line_styles():
                         "Hence we use the default {2}"
                         .format(s, plt.colormaps(), settings.sequential_colormaps))
             cvals = settings.sequential_colormaps
-    # map algorithm argument index to first algorithm appearence index
+    # map algorithm argument index to first algorithm appearance index
     mapping = settings.line_style_mapping or map_indices_to_line_styles(
                         settings._current_args)
-    counts = collections.Counter(mapping.values())  # count number of appearences
+    counts = collections.Counter(mapping.values())  # count number of appearances
     if settings.verbose >= 0:
         print("config_line_styles: found {0} distinct algorithm(s) in indices {1} of {2} arguments"
               .format(len(counts), sorted(counts), len(mapping)))
