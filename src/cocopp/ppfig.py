@@ -76,7 +76,7 @@ def save_figure(filename,
              color='0.5',
              transform=plt.gca().transAxes)
     for format in fig_formats:
-        if plt.matplotlib.__version__[0] >= '3' and subplots_adjust:
+        if int(plt.matplotlib.__version__.split('.')[0]) >= 3 and subplots_adjust:
             # subplots_adjust is used in pprldmany.main with bottom=0.135, right=0.735
             plt.subplots_adjust(**subplots_adjust)
         elif layout_rect:
