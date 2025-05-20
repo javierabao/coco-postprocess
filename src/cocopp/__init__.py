@@ -104,6 +104,7 @@ from . import config
 from . import archiving
 from . import rungeneric
 from . import genericsettings
+# from . import reduce_size  # leads to a warning in the ``python -m cocopp.reduce_size`` usecase
 
 from .rungeneric import main
 
