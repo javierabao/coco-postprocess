@@ -2194,12 +2194,10 @@ class DataSet(object):
         """
         append_instances = append_instances and self.evals_are_appended  # to prevent unnecessary warning
         if target_values is not None:
-            warnings.warn("median_evals was only recently implemented for "
-                                      "all target values")
             evals = np.asarray(self.detEvals(target_values, copy=True, append_instances=append_instances))
         else:
-            evals = self.evals_appended[:, 1:] if append_instances else self.evals  # evals may balance instances
-            evals = evals.copy()
+            evals = self.evals_appended[:, 1:] if append_instances else self.evals[:, 1:]  # evals may balance instances
+            evals = evals.copy()  # slices are views, now ``evals.base is None``
         evals[~numpy.isfinite(evals)] = numpy.inf
         m = numpy.median(evals, 1)
         m[~np.isfinite(m)] = np.nan
