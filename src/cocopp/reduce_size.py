@@ -1,10 +1,14 @@
-"""Reduce the data size of a COCO experiment folder from the default logger.
+"""Reduce the data size of COCO experiment folder(s) from the default logger.
 
 Data are copied into a new folder and then reduced in place.
 
 Usage on a system shell::
 
      python -m cocopp.reduce_size folder_name
+
+`folder_name` may be a single experiment folder or may contain several full
+experiment folders. In either case, the reduction is applied to all
+admissible single data files found anywhere under `folder_name`.
 
 Further arguments denote the functions applied to the files, by default
 ``reduce_dat reduce_tdat remove_x``. 
@@ -38,6 +42,8 @@ allowed_x_names = ['DIM2.', 'DIM3.', 'DIM5.']
 def main(folder_name, apply=('reduce_dat', 'reduce_tdat', 'remove_x')):
     """`folder_name` contains output of a single COCO experiment, usually a folder in ``exdata``
     """
+    if folder_name.endswith('/') or folder_name[-1] == os.path.sep:
+        folder_name = folder_name[:-1]
     new_name = '{0}-{1}'.format(folder_name, time.strftime("%m%d%Hh%M%S"))
     shutil.copytree(folder_name, new_name)  # raise `FileExistsError` when new_name exists
     for folder, dirs, files in os.walk(new_name):
