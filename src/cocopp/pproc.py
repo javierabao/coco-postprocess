@@ -1729,40 +1729,86 @@ class DataSet(object):
         # targets, sorted along targets
         return list(res[i][1] for i in targets)
 
-    def detEvals(self, targets, copy=True, bootstrap=False, append_instances=False):
+    def detEvals(self, targets, copy=True, bootstrap=False,
+                 append_instances=False, complement_unsuccessful=False):
         """return ``len(targets)`` data rows ``self.evals[i, 1:]``.
 
         If `bootstrap`, the "data rows" are ``len(self.evals[i, 1:])``
         values drawn with replacement from ``self.evals[i, 1:]``. This may
         be useful to estimate variances (at some point).
 
-        Rows have the closest but not a larger target such that
-        ``self.evals[i, 0] <= target and self.evals[i - 1, 0] > target``,
-        or in the "limit" cases the first data line or a line
-        ``np.array(self.nbRuns() * [np.nan])``.
+        If `complement_unsuccessful` (given ``append_instances is False``),
+        replace nonfinite values (namely `nan`) either with the respective
+        ``maxevals * complement_unsuccessful`` or with
+        ``complement_unsucccessful(maxevals)`` if
+        ``complement_unsucccessful is callable``. This allows, for example,
+        to return unsuccessful "runtimes" as their negative values by
+        passing ``complement_unsucccessful=-1`` which can then be used with
+        `toolsstats.simulated_evals`.
+
+        Returned rows are those with the closest target that is not larger
+        than the given target so that ``self.evals[i, 0] <= target`` and,
+        if ``i > 0``, ``self.evals[i - 1, 0] > target``. When the target
+        was never reached the row is ``np.array(self.nbRuns() * [np.nan])``.
 
         Makes by default a copy of the data, however this might change in
         future.
+
+        Details:
+        
+        `maxevals` are usually read from the .info files, however with
+        constraints they are read from the .tdat files as the .info files
+        do not contain g-evaluations.
+
+        If `instances_are_appended`, the `maxevals` attribute is not
+        consistent with `evals_appended`. The latter is abandoned anyways
+        and superseded by evals_balanced (which is more or less automatic)!?
     """
         evals = self.evals
         if append_instances:  # TODO: add append_instances=True in toolstats line 709
             warnings.warn("append_instances was never thoroughly tested")
             evals = self.evals_appended
-        evalsrows = {}  # data rows, easiest target first
+        if len(self.maxevals) != len(self.evals[0]) - 1:
+            warnings.warn("{0} = len(self.maxevals) != len(self.evals[0]) - 1 = {1}"
+                          .format(len(self.maxevals), len(self.evals[0]) - 1)
+                          + (", hence option ``complement_unsuccessful={0}`` is ignored"
+                                .format(complement_unsuccessful)
+                             if complement_unsuccessful else ''))
+            complement_unsuccessful = False
+        evalsrows = {}  # data rows with target as key
         idata = evals.shape[0] - 1  # current data line index
-        for target in sorted(targets):  # smallest most difficult target first
+        for target in sorted(targets):  # smallest (most difficult) target first
+            copied = False
             if evals[-1, 0] > target:  # last entry is worse than target
-                evalsrows[target] = np.array(self.nbRuns() * [np.nan])
-                continue
-            while idata > 0 and evals[idata - 1, 0] <= target:  # idata-1 line is good enough
-                idata -= 1  # move up
-            assert evals[idata, 0] <= target and (idata == 0 or evals[idata - 1, 0] > target)
-            evalsrows[target] = evals[idata, 1:].copy() if copy else evals[idata, 1:]
-        if do_assertion:
-            assert all([all((np.isnan(evalsrows[target]) + (evalsrows[target] == self._detEvals2(targets)[i])))
-                        for i, target in enumerate(targets)])
+                copied = True
+                # see https://stackoverflow.com/questions/1704823/create-numpy-matrix-filled-with-nans
+                # .empty since 1.20 (2021), .full since 2.0.0
+                evalsrows[target] = np.zeros(self.nbRuns())  # 10% slower than np.empty
+                evalsrows[target][:] = np.nan  # takes longer than zeros
+            else:
+                while idata > 0 and evals[idata - 1, 0] <= target:
+                    # idata-1 line is good enough, hence move up
+                    idata -= 1
+                assert evals[idata, 0] <= target and (idata == 0 or evals[idata - 1, 0] > target)
+                evalsrows[target] = evals[idata, 1:].copy() if copy else evals[idata, 1:]
+                if do_assertion:
+                    assert all((np.isnan(evalsrows[target]) + (
+                        evalsrows[target] == self._detEvals2([target])[0]))), (
+                                    evalsrows[target], self._detEvals2([target])[0])
+            if complement_unsuccessful and not append_instances:
+                # appended instances are not necessarily consistent with maxevals,
+                # we would have _maxevals_appended though
+                idx = ~np.isfinite(evalsrows[target])
+                if np.any(idx):
+                    if not copy and not copied:
+                        # otherwise we would now change the data in self
+                        evalsrows[target] = evalsrows[target].copy()    
+                    evalsrows[target][idx] = (
+                                    complement_unsuccessful(self.maxevals[idx])
+                                        if callable(complement_unsuccessful) else
+                                    complement_unsuccessful * self.maxevals[idx])
         if bootstrap:
-            return [np.asarray(evalsrows[t])[np.random.randint(0,
+            return [np.asarray(evalsrows[t])[np.random.randint(0,  # asarray looks superfluous
                                 len(evalsrows[t]), len(evalsrows[t]))]
                     for t in targets]
         return [evalsrows[t] for t in targets]  # order w.r.t. input targets
