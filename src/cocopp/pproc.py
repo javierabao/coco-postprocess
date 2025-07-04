@@ -1928,9 +1928,8 @@ class DataSet(object):
                 == tuple(self.instancenumbers)):
             return self._instance_multipliers  # instancenumbers did not change
         instance_counters = collections.Counter(self.instancenumbers)
-        """ ``instance_counters[self.instancenumbers[i]]`` is the
-            counter for self.evals[:, i+1]
-            """
+        '''``instance_counters[self.instancenumbers[i]]`` is the
+           counter for self.evals[:, i+1]'''
         try:
             lcm = np.lcm.reduce(list(instance_counters.values()))  # lowest common multiplier
         except AttributeError:  # old versions of numpy don't know lcm
@@ -2001,7 +2000,12 @@ class DataSet(object):
         are aggregated (appended).
 
         The aggregation appends trials with the same instance ID in the
-        order of their appearance.
+        order of their appearance. This can be useful when computing
+        statistics over the evals, like the median runtime, however using
+        simulated runtimes seems better for this?
+
+        CAVEAT: if instances are uniform, only within-instance appending
+        seems not logical.
 
         >>> import warnings
         >>> import cocopp
@@ -2189,6 +2193,10 @@ class DataSet(object):
         `genericsettings.appended_evals_minimal_trials` and if
         `testbedsettings.current_testbed.instances_are_uniform`.
 
+        CAVEAT: instance appending is not fully consistent with the `ert`
+        attribute and with simulated restarts, both of which are computed
+        over all instance.
+
         Details: copies the evals attribute and sets `nan` to `inf` in
         order to get the median with `nan` values in the sorting.
         """
@@ -2210,6 +2218,10 @@ class DataSet(object):
         refer to `instancenumbers_balanced` whos first indices are the same
         as in `instancenumbers`.
 
+        The default for `raw_values` seems more appropriate for internal
+        usage, in particular as `.instancenumbers_balanced` equals
+        `.instancenumbers` when `evals` were not balanced?
+
         The index starts with 0 conforming with `instancenumbers`,
         `maxevals`, `detEvals` and others. However in the `evals`
         array, column 0 contains f-values and the instance indices start
@@ -2219,7 +2231,7 @@ class DataSet(object):
         for index, i in enumerate(self.instancenumbers if raw_values
                                   else self.instancenumbers_balanced):
             if i not in res:
-                res[i] = []
+                res[i] = []  # initialize
             res[i] += [index]
         return res
 
