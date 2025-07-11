@@ -1156,34 +1156,70 @@ class DataSet(object):
             targets,
             samplesize=None,
             randintfirst=toolsstats.randint_derandomized,
-            randintrest=np.random.randint,
+            randintrest=np.random.randint,  # TODO: why not derandomized?
             bootstrap=False,
-            instance=None):
-        """Return a ``len(targets)`` `list` of ``samplesize`` "simulated runtimes"
+            instance=None,
+            instances_are_uniform=None):
+        """Return a `list` of arrays of "simulated runtimes"
 
-        with an interface similar to `detEvals`.
+        with an interface analogous to `detEvals`. Elements of the returned
+        list correspond to the elements of `targets`.
 
         `samplesize` is by default the smallest multiple of ``nbRuns()``
-        that is not smaller than 15.
+        that is not smaller than 45 and it remains the same even when
+        instances are not uniform and hence simulated separately. If
+        ``samplesize == 'individual'`` and instances are uniform, an adhoc
+        sample size is computed for each target separately based on the
+        data.
 
         `bootstrap` is passed to `detEvals` such that the simulated runs
         use a bootstrapped subset. This will increase the variance from
         repeated `evals_with_simulated_restarts` calls. This may become
         useful to measure dispersion of runtime profiles.
 
-        `instance`, when given, uses only the data from this instance. The
-        default `samplesize` may not be appropriate in this case.
+        `instance`, when given, returns only the simulated runtimes from
+        this instance. The default `samplesize` remains the same based on
+        the overall ``.nbRuns()``.
 
         ``np.sort(np.concatenate(return_value))`` provides the combined
-        sorted ECDF data over all targets which may be plotted with
-        `pyplot.step` (missing the last step).
+        sorted ECDF data over all targets which can be plotted with
+        `pyplot.step` like::
+
+            x = np.sort(np.concatenate(return_value))
+            pyplot.step(np.concatenate([x, [x[-1]]]), np.linspace(0, 1, len(x) + 1))
+
+        Don't use `'individual'` sample sizes when the data are meant to be
+        combined.
 
         Unsuccessful data are represented as `np.nan`.
 
         Simulated restarts are used for unsuccessful runs. The usage of
         `detEvals` or `evals_with_simulated_restarts` should be largely
         interchangeable, while the latter has a "success" rate of either
-        0 or 1.
+        0 or 1 when `instances_are_uniform`.
+
+        >>> import numpy as np
+        >>> import cocopp  # candidate data sets: 13/cma (fast) or 13/ipop (more diverse)
+        >>> print('load data set'); dsl = cocopp.load2('b/2009/bay')  # doctest:+ELLIPSIS
+        load data set...
+        >>> for t in [1, 0.1, 1e-8]:
+        ...     evals = ds.detEvals([t], instance=None)[0]
+        ...     evals.sort()  # sort nan to the end
+        ...     simevals = ds.evals_with_simulated_restarts([t],
+        ...                             samplesize=ds.nbRuns())[0]
+        ...     simevals.sort()
+        ...     nans = sum(np.isnan(evals))
+        ...     if nans:
+        ...         evals, simevals = evals[:-nans], simevals[:-nans]
+        ...     # works only when the unsuccessful are the longest
+        ...     assert all(evals == simevals), (evals, simevals)
+        >>> instance = np.random.randint(5) + 1
+        >>> target = 10**(10 * np.random.rand() - 8)
+        >>> d = ds.detEvals([target], instance=instance)[0]
+        >>> simevals = ds.evals_with_simulated_restarts([target],
+        ...                 samplesize=5, instance=instance)[0]
+        >>> if all(np.isfinite(d)):  # check that exactly one value is not repeated
+        ...     assert sum(simevals) in [2 * sum(d) - di for di in d], (simevals, d)
 
         Details:
 
@@ -1191,40 +1227,132 @@ class DataSet(object):
           is sufficient (and preferable) if `randint` is derandomized.
         - A single successful running length is computed by adding
           uniformly randomly chosen running lengths until the first time a
-          successful one is chosen. In case of no successful run the
-          result is `None`.
+          successful one is chosen.
+        - if `samplesize` >> `nbRuns` and nsuccesses is large,
+          the data representation becomes somewhat inefficient.
+          Similarly, for nsuccesses==0 it is ``samplesize * [np.nan]``.
+        - When not `instances_are_uniform`, simulated restarts are taken
+          from the same instance only and the `samplesize` is (almost)
+          the same for all instances.
 
-        TODO: if `samplesize` >> `nbRuns` and nsuccesses is large,
-        the data representation becomes somewhat inefficient.
+        TODO: revisit the adhoc `best_samplesize` and
+              `_byinstance_samplesize` computations
+        """
+        try:
+            targets = targets([self.funcId, self.dim])  # get budget based targets
+        except TypeError:
+            pass
 
-        TODO: it may be useful to make the samplesize dependent on the
-        number of successes and supply the multipliers
-        max(samplesizes) / samplesizes.
-    """
-        try: targets = targets([self.funcId, self.dim])
-        except TypeError: pass
-        if samplesize is None:  # default sampling is derandomized, hence no need for a huge number
+        # lots of helper functions
+        def fit_sample_size(s):
+            """return smallest multiple of nbRuns that is not smaller than `s`"""
             samplesize = 0
-            while samplesize < 15:
+            assert self.nbRuns() > 0
+            while samplesize < s:  # TODO: this is not suitable if we have 5 successful instances?
                 samplesize += self.nbRuns()
-        if instance is None:
-            evals_list = self.detEvals(targets, copy=True, bootstrap=bootstrap)
-        else:
-            evals_list = self.detEvals_by_instance(
-                    targets, copy=True, bootstrap=bootstrap)[instance]
-        return self._evals_with_simulated_restarts(evals_list,
-            samplesize, randintfirst, randintrest, bootstrap)
+            return samplesize
+        def best_samplesize(evals):
+            """adhoc heuristic for a sample size, not clear what is good"""
+            n = len(evals)
+            nsucc = sum(evals > 0)
+            nfail = n - nsucc
+            if nsucc == 0:
+                return 1  # return [np.nan]
+            if nsucc == n:
+                return n
+            fails = evals[evals<0]
+            succs = evals[evals>0]
+            b = 4  # makes the smallest denominator to be 5
+            r0 = (min(fails) - b) / (max(fails) - b)  # fails are negative values
+            r1 = (b + max(succs)) / (b + min(succs))
+            s = int(n * (1 + nfail**0.5) * max((r0, r1))**0.25)
+            return fit_sample_size(s)
+        def _byinstance_samplesize():
+            """overall samplesize for within-instance restarts,
+
+            they should be the same for each target and almost the same for
+            each instance.
+
+            Ideally, we would compute `best_samplesize` for each instance
+            and take the max times number_of_instances?
+            """
+            if samplesize == str(samplesize):
+                return 5 * self.nbRuns()  # gets divided by len(detEvals_by_instance())
+            return samplesize
+        def _sample_size(evals):
+            if samplesize_ == 'individual':
+                return best_samplesize(evals)
+            return samplesize
+        def instances_are_singular(evals_dict):
+            """check whether the number of runs per instance equals 1
+
+            for all instances. `evals_dict` is the return value of
+            `detEvals_by_instance`.
+
+            The return value should equal ``all(instance_multipliers ==
+            1)``.
+            """
+            for evals_by_target in evals_dict.values():
+                if len(evals_by_target[0]) > 1:  # all targets have the same number of data, so we need to check only the first
+                    return False
+            return True
+        def identity(x):
+            return x
+
+        samplesize_ = samplesize  # keep input argument value
+        if samplesize is None:
+            # default sampling is derandomized, hence no need for a huge number
+            samplesize = fit_sample_size(45)
+        if instances_are_uniform is None:
+            instances_are_uniform = testbedsettings.current_testbed.instances_are_uniform
+        if instances_are_uniform or instance is not None:
+            evals_list = self.detEvals(targets, copy=True, bootstrap=bootstrap,
+                                       complement_unsuccessful=-1, instance=instance)
+            return [toolsstats.simulated_evals(evals,
+                        -1, _sample_size(evals), randintfirst, randintrest, np.asarray)
+                    for evals in evals_list]
+        # we need within instance simulated restarts
+        if bootstrap:
+            warnings.warn("bootstrap={0} is not fully compatible with "
+                          "instances_are_uniform={1} because bootstrap "
+                          "is currently done over all instances"
+                          .format(bootstrap, instances_are_uniform))
+        evals_dict = self.detEvals_by_instance(targets,
+                raw_values=True,  # doesn't matter because sampling balances instances
+                copy=True, bootstrap=bootstrap, complement_unsuccessful=-1)
+        res = len(targets) * [[]]
+        instances_are_singular_ = instances_are_singular(evals_dict)
+        ssum = _byinstance_samplesize()
+        for count, evals_list in enumerate(evals_dict.values()):  # for each instance
+            for t, evals in enumerate(evals_list):  # for each target
+                ssingle = int(np.round((ssum - len(res[t]))
+                                    / (len(evals_dict) - count)))
+                if samplesize_ is None and instances_are_singular_:
+                    assert len(evals) == 1, evals
+                    res[t].extend(evals)
+                # if instances_multipliers_are_the_same but > 1, we
+                # would need all evals to be uniformely either finite
+                # or nan for *all* instances and *all* targets to
+                # circumvent simulated_evals
+                else:
+                    res[t].extend(toolsstats.simulated_evals(evals,
+                                -1, ssingle, randintfirst, randintrest, identity))
+        return [np.asarray(r) for r in res]
 
     def _evals_with_simulated_restarts(self, evals_list, samplesize,
-                                       randintfirst, randintrest, bootstrap):
-        """return simulated runtimes for each 1D-array in `evals_list`.
+                                       randintfirst, randintrest):
+        """OBSOLETE (never used?), rather use toolsstats.simulated_evals. return simulated runtimes for each 1D-array in `evals_list`.
+
+        Change elements of `evals_list` in place.
 
         See `evals_with_simulated_restarts`
         """
+        do_sort = True  # use sort to get unsuccessful evals to the end
         res = []  # a list of samplesize runtime arrays (evals)
         for evals in evals_list:
             # prepare evals array
-            evals.sort()  # nan are sorted to the end (since numpy 1.4.0 ~2013)
+            if do_sort:
+                evals.sort()  # nan are sorted to the end (since numpy 1.4.0 ~2013)
             indices = np.isfinite(evals)
             nsucc = sum(indices)
             if nsucc == 0:  # no successes
@@ -1235,11 +1363,12 @@ class DataSet(object):
                 continue
             nindices = ~indices
             assert sum(indices) + sum(nindices) == len(evals)
-            assert max(np.nonzero(indices)[0]) < min(np.nonzero(nindices)[0]), (
+            assert not do_sort or max(np.nonzero(indices)[0]) < min(np.nonzero(nindices)[0]), (
                 indices, nindices)
             evals[nindices] = self.maxevals[nindices]  # replace nan
             # let the first nsucc data in evals be those from successful runs
-            # evals = np.hstack([evals[indices], evals[nindices]])  # done by evals.sort
+            if not do_sort:
+                evals = np.hstack([evals[indices], evals[nindices]])
             assert sum(np.isfinite(evals)) == len(evals)
 
             # do the job
@@ -1840,6 +1969,11 @@ class DataSet(object):
         res = collections.OrderedDict()
         for i, idx in self.instance_index_lists(raw_values).items():
             res[i] = [evals[idx] for evals in evals_list]
+        if len(res) != len(set(self.instancenumbers)):
+            warnings.warn("detEvals_by_instance: len(.detEvals_by_instance(...) = {0}"
+                          " != {1} = len(set(.instancenumbers))"
+                          " which looks like a bug"
+                          .format(len(res), len(set(self.instancenumbers))))
         return res
 
     def _number_of_better_runs(self, target, ref_eval):
