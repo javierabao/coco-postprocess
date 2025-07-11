@@ -298,8 +298,8 @@ def randint_derandomized(low, high=None, size=None):
 
     The interface is the same as for `numpy.randint`, however the
     default value for `size` is ``high - low`` and each "random" integer
-    is guarantied to appear exactly once in each chunk of size
-    ``high - low``. (That is, by default a permutation is returned.)
+    is guarantied to appear at least once in each chunk of size
+    ``2 * (high - low)``. (That is, by default a permutation is returned.)
 
     As for `numpy.randint`, the value range is [low, high-1] or [0, low-1]
     if ``high is None``.
@@ -336,18 +336,17 @@ def _randint_derandomized_generator(low, high=None, size=None):
 def simulated_evals(evals, nfails,
             samplesize=genericsettings.simulated_runlength_bootstrap_sample_size,
             randint=randint_derandomized):
-    """Obsolete: see `DataSet.evals_with_simulated_restarts` instead.
-
-    Return `samplesize` "simulated" run lengths (#evaluations), sorted.
+    """Return `samplesize` "simulated" run lengths (#evaluations).
 
     Input:
       - *evals* -- array of evaluations
-      - *nfail* -- only the last `nfail` evaluations come from
-                    unsuccessful runs
+      - *nfails* -- the last `nfails` evaluations come from unsuccessful
+                    runs; -1 indicates that unsuccessful runs have negative
+                    runtime values regardless of their position
       - *randint* -- random integer index function of the first simulated run
 
     Return:
-       all_sampled_runlengths_sorted
+       all_sampled_runlengths as a sorted `list`
 
     Example:
 
@@ -363,9 +362,7 @@ def simulated_evals(evals, nfails,
     Details:
        A single successful running length is computed by adding
        uniformly randomly chosen running lengths until the first time a
-       successful one is chosen. In case of no successful run an
-       exception is raised.
-
+       successful one is chosen.
     """
     # Testing:
     # Expected (previous):
@@ -373,19 +370,23 @@ def simulated_evals(evals, nfails,
     # Got (now):
     #     [1, 1, 3, 3, 7, 9, 11, 17, 107, 115, 209, 427, 445]
 
-    if len(evals) == 0 or nfails >= len(evals):
-        raise ValueError("""without any successful run, simulated
-    runlengths are undefined from these data. A reasonable lower bound
-    for a single measurement from these data is %d""" %
-                         int(sum(evals)))
+    if nfails > len(evals):
+        raise ValueError("argument values nfails={0}>{1}=len(evals) are not consistent"
+                         .format(nfails, len(evals)))
     samplesize = int(samplesize)
     evals = np.asarray(evals)
-    # evals.sort()  # this was a bug assigning `failing` below to the wrong values (introduced July 2017, removed July 2025, `simulated_evals` was not used in cocopp)
-
+    if nfails == -1:
+        nfails = sum(evals < 0)
+        if 0 < nfails < len(evals):  # sort to the end and take abs values
+            evals = evals.copy()
+            evals.sort()
+            evals = np.abs(evals[::-1])  # sort unsuccessful to the end
+    if nfails == len(evals):
+        return samplesize * [np.nan]
     indices = randint(0, len(evals), samplesize)
     sums = evals[indices]
     if nfails == 0:
-        return sorted(sums)
+        return sorted(sums)  # convert array to a list
     failing = np.where(indices >= len(evals) - nfails)[0]
     assert len(evals) - nfails > 0  # prevent infinite loop
     while len(failing):
@@ -394,7 +395,7 @@ def simulated_evals(evals, nfails,
         # keep failing indices
         failing = [failing[i] for i in range(len(failing))
                                if indices[i] >= len(evals) - nfails]
-    return sorted(sums)
+    return sorted(sums)  # convert array to list
 
 
 def draw(data, percentiles, samplesize=1e3, func=sp1, args=()):
