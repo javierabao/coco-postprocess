@@ -152,12 +152,12 @@ def sp(data, maxvalue=np.inf, issuccessful=None, allowinf=True):
                         if not np.isnan(data[i])]
     dat = [d for d in data if not np.isnan(d)]
     N = len(dat)
-    dat.sort()
+    # dat.sort()  # this was a bug when later testing for issuccessful, possibly leading to a wrong success rate if the data also contains nan values (introduced July 2017, removed July 2025)
 
     if N == 0:
         return(np.nan, np.nan, np.nan)
 
-    # remove unsuccessful data
+    # remove unsuccessful data, we never use succdat though, only len(succdat)
     if issuccessful is not None:
         succdat = [dat[i] for i in range(len(dat)) if issuccessful[i]]
     else:
@@ -268,10 +268,10 @@ def drawSP(runlengths_succ, runlengths_unsucc, percentiles,
     # The samplesize depends on the number of unsuccessful runs?
 
     arrStats = []
-    sdata = np.array(runlengths_succ)  # more efficient indexing
-    sdata.sort()
-    udata = np.array(runlengths_unsucc)  # more efficient indexing
-    udata.sort()
+    sdata = np.asarray(runlengths_succ)  # more efficient indexing
+    # sdata.sort()  # useless code
+    udata = np.asarray(runlengths_unsucc)  # more efficient indexing
+    # udata.sort()  # useless code
     Nu = len(udata)
     Ns = len(sdata)
     # data = np.r_[udata, sdata]
@@ -380,7 +380,7 @@ def simulated_evals(evals, nfails,
                          int(sum(evals)))
     samplesize = int(samplesize)
     evals = np.asarray(evals)
-    evals.sort()
+    # evals.sort()  # this was a bug assigning `failing` below to the wrong values (introduced July 2017, removed July 2025, `simulated_evals` was not used in cocopp)
 
     indices = randint(0, len(evals), samplesize)
     sums = evals[indices]
@@ -432,8 +432,8 @@ def draw(data, percentiles, samplesize=1e3, func=sp1, args=()):
     """
     arrStats = []
     N = len(data)
-    adata = np.array(data)  # more efficient indexing
-    adata.sort()
+    adata = np.asarray(data)  # more efficient indexing
+    # adata.sort()  # this was a bug disconnecting the succ indices from the data (introduced July 2017, removed July 2025, `draw` was not used in cocopp)
     succ = None
     # there is a third argument to func which is the array of success
     if len(args) > 1:
