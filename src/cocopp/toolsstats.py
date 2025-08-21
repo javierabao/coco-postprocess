@@ -476,23 +476,31 @@ def prctile(x, arrprctiles, issorted=False, ignore_nan=True):
         prctiles
 
     .. note::
-        treats np.inf and -np.inf, np.nan and None, the latter are
+        treats np.inf and -np.inf, np.nan and None, the latter is
         simply disregarded
+
+    >>> import cocopp
+    >>> pc = cocopp.toolsstats.prctile
+    >>> l = [2, 3, np.nan, 1]
+    >>> pp = pc(l, [5, 25, 50, 75, 95], ignore_nan=False)
+    >>> [float(p) for p in pp]
+    [1.0, 1.5, 2.5, nan, nan]
 
     """
     if not getattr(arrprctiles, '__iter__', False):  # is not iterable
         arrprctiles = (arrprctiles,)
         # makes a tuple even if the arrprctiles is not iterable
-    # remove NaNs, sort
 
-    x = [d for d in x if d is not None and (not np.isnan(d) or not ignore_nan)]
+    # remove None and NaNs and sort
+    x = [d for d in x
+         if d is not None and (not ignore_nan or not np.isnan(d))]
     if not issorted:
-        x.sort()
+        x = np.array(x)  # lists do not guaranty a proper sort of nan
+        x.sort()  # nan are sorted to the end (since numpy 1.4.0 ~2013)
 
     N = float(len(x))
     if N == 0:
         return [np.nan for a in arrprctiles]
-
     res = []
     for p in arrprctiles:
         i = -0.5 + (p / 100.) * N
@@ -504,12 +512,13 @@ def prctile(x, arrprctiles, issorted=False, ignore_nan=True):
             res += [x[-1]]
         elif ilow == ihigh:
             res += [x[ilow]]
-        # np.bool__.any() works as well as np.array.any()...
-        elif np.isinf(x[ihigh]).any() and ihigh - i <= 0.5:
-            res += [x[ihigh]]
-        elif np.isinf(x[ilow]).any() and i - ilow < 0.5:
-            res += [x[ilow]]
-        else:
+        elif not np.isfinite(x[ilow]) or not np.isfinite(x[ihigh]):
+            # interpolation would fail, hence use proximity
+            if ihigh - i <= 0.5:
+                res += [x[ihigh]]
+            else:
+                res += [x[ilow]]
+        else:  # linear interpolation
             res += [(ihigh - i) * x[ilow] + (i - ilow) * x[ihigh]]
     return res
 
