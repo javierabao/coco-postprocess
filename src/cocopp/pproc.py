@@ -1730,7 +1730,8 @@ class DataSet(object):
         return list(res[i][1] for i in targets)
 
     def detEvals(self, targets, copy=True, bootstrap=False,
-                 append_instances=False, complement_unsuccessful=False):
+                 append_instances=False, complement_unsuccessful=False,
+                 instance=None):
         """return ``len(targets)`` data rows ``self.evals[i, 1:]``.
 
         If `bootstrap`, the "data rows" are ``len(self.evals[i, 1:])``
@@ -1789,7 +1790,8 @@ class DataSet(object):
                 while idata > 0 and evals[idata - 1, 0] <= target:
                     # idata-1 line is good enough, hence move up
                     idata -= 1
-                assert evals[idata, 0] <= target and (idata == 0 or evals[idata - 1, 0] > target)
+                assert evals[idata, 0] <= target and (idata == 0
+                    or evals[idata - 1, 0] > target), (target, idata, evals[idata, 0])
                 evalsrows[target] = evals[idata, 1:].copy() if copy else evals[idata, 1:]
                 if do_assertion:
                     assert all((np.isnan(evalsrows[target]) + (
@@ -1807,6 +1809,18 @@ class DataSet(object):
                                     complement_unsuccessful(self.maxevals[idx])
                                         if callable(complement_unsuccessful) else
                                     complement_unsuccessful * self.maxevals[idx])
+        if instance is not None:  # return evals of a single instance only
+            if instance not in self.instancenumbers:
+                raise ValueError("instance = {0} not in .instancenumber = {1}"
+                                 " of this DataSet"
+                                 .format(instance, self.instancenumbers))
+            assert len(self.instancenumbers_balanced) == len(evalsrows[target])
+            # raw_values=False ==> use instancenumbers_balanced
+            # when genericsettings.balance_instances is False then
+            # instancenumbers_balanced == instancenumbers
+            idx = np.asarray(self.instance_index_lists(raw_values=False)[instance])
+            for t in evalsrows:
+                evalsrows[t] = evalsrows[t][idx]
         if bootstrap:
             return [np.asarray(evalsrows[t])[np.random.randint(0,  # asarray looks superfluous
                                 len(evalsrows[t]), len(evalsrows[t]))]
