@@ -335,7 +335,9 @@ def _randint_derandomized_generator(low, high=None, size=None):
 
 def simulated_evals(evals, nfails,
             samplesize=genericsettings.simulated_runlength_bootstrap_sample_size,
-            randint=randint_derandomized):
+            randint=randint_derandomized,
+            randintrest=np.random.randint,
+            return_as=sorted):
     """Return `samplesize` "simulated" run lengths (#evaluations).
 
     Input:
@@ -344,9 +346,14 @@ def simulated_evals(evals, nfails,
                     runs; -1 indicates that unsuccessful runs have negative
                     runtime values regardless of their position
       - *randint* -- random integer index function of the first simulated run
+      - *randintrest* -- random integer index function for the added runtimes
+      - *return_as* -- called on the np.array result before return,
+                       `np.asarray` or the identity should be faster than the
+                       default `sorted`.
+                       Introduced to remain backwards compatible.
 
     Return:
-       all_sampled_runlengths as a sorted `list`
+       all_sampled_runlengths, by default as a sorted `list`
 
     Example:
 
@@ -382,20 +389,27 @@ def simulated_evals(evals, nfails,
             evals.sort()
             evals = np.abs(evals[::-1])  # sort unsuccessful to the end
     if nfails == len(evals):
-        return samplesize * [np.nan]
+        # minor time optimization
+        if return_as in (sorted, list):
+            return samplesize * [np.nan]
+        elif return_as in (np.asarray, np.array):
+            res = np.zeros(samplesize)
+            res[:] = np.nan
+            return res
+        return return_as(samplesize * [np.nan])
     indices = randint(0, len(evals), samplesize)
     sums = evals[indices]
     if nfails == 0:
-        return sorted(sums)  # convert array to a list
-    failing = np.where(indices >= len(evals) - nfails)[0]
+        return return_as(sums)  # convert array
+    failing = np.nonzero(indices >= len(evals) - nfails)[0]
     assert len(evals) - nfails > 0  # prevent infinite loop
     while len(failing):
-        indices = np.random.randint(0, len(evals), len(failing))
+        indices = randintrest(0, len(evals), len(failing))
         sums[failing] += evals[indices]
         # keep failing indices
         failing = [failing[i] for i in range(len(failing))
                                if indices[i] >= len(evals) - nfails]
-    return sorted(sums)  # convert array to list
+    return return_as(sums)  # convert array
 
 
 def draw(data, percentiles, samplesize=1e3, func=sp1, args=()):
