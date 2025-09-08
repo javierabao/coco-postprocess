@@ -2590,6 +2590,7 @@ class DataSet(object):
         plot_kwargs.setdefault('clip_on', False)  # doesn't help
         plot_kwargs.setdefault('linewidth', 0.5)
         plot_kwargs.setdefault('marker', '.')
+        plot_kwargs.setdefault('markersize', 2)
         colors = None if 'color' in plot_kwargs else (
             iter(color_map or plt.cm.brg(np.linspace(0, 0.5, self.nbRuns()))))
         #   iter(plt.cm.plasma(np.linspace(0, 0.7, self.nbRuns()))))
