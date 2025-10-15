@@ -854,8 +854,9 @@ def main(dsList, isStoringXMax=False, outputdir='',
                 )
         try: # was never tested, so let's make it safe
             if len(funcs) == 1:
-                plt.title(testbed.info(funcs[0])[:27])
-        except:
+                title_text = testbed.info(funcs[0])
+                plt.title(toolsdivers.display_wrap(title_text, width=27))
+        except Exception:
             warnings.warn('could not print title')
 
 

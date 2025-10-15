@@ -387,9 +387,20 @@ def main(dsList0, dsList1, outputdir, settings):
 
         # set x- and y-labels based on which algorithm is compared
         a = plt.gca()
-        a.set_xlabel('log10(ERT of %s)' % dsList0[0].algId[:18],
+        # use human-friendly display names for axis labels
+        try:
+            xalg = toolsdivers.display_wrap(
+                dsList0[0].displayName or dsList0[0].algId, width=22)
+        except Exception:
+            xalg = dsList0[0].algId[:18]
+        try:
+            yalg = toolsdivers.display_wrap(
+                dsList1[0].displayName or dsList1[0].algId, width=22)
+        except Exception:
+            yalg = dsList1[0].algId[:18]
+        a.set_xlabel('log10(ERT of %s)' % xalg,
                      fontsize=0.85*genericsettings.rcfont["size"])
-        a.set_ylabel('log10(ERT of %s)' % dsList1[0].algId[:18],
+        a.set_ylabel('log10(ERT of %s)' % yalg,
                      fontsize=0.85*genericsettings.rcfont["size"])
 
         fontSize = getFontSize(funInfos.values())

@@ -8,6 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cocopp"
+version = "0.1.0"
 authors = [
   {name="Umut Batu"},
   {name="Dimo Brockhoff"},

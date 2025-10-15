@@ -273,6 +273,11 @@ background_default_style = (3 * (0.9,), '-')  # very light gray
 foreground_algorithm_list = []
 '''a list of data files/folders as those specified in cocopp.main'''
 
+# Optional mapping from canonical algorithm names (folder/archive names or
+# `algId`) to human-friendly display names used in plots and HTML pages.
+# Example: {'adapt-Nelder-Mead-scipy-2019_Varelas': 'adapt-Nelder-Mead (Varelas)'}
+display_name_map = {}
+
 ##
 isLogLoss = True  # only affects rungeneric1
 isPickled = False  # only affects rungeneric1

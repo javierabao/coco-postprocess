@@ -40,6 +40,7 @@ from .readalign import split, align_data, HMultiReader, VMultiReader, openfile
 from .readalign import HArrayMultiReader, VArrayMultiReader, alignArrayData
 from .ppfig import consecutiveNumbers, Usage
 from . import archiving
+from . import toolsdivers
 
 do_assertion = genericsettings.force_assertions # expensive assertions
 targets_displayed_for_info = [10, 1., 1e-1, 1e-3, 1e-5, 1e-8]  # only to display info in DataSetList.info
@@ -788,6 +789,19 @@ class DataSet(object):
                     suite = testbedsettings.default_suite_single
         return suite
 
+    @property
+    def displayName(self):
+        """Return a human-friendly display name for this DataSet's algorithm.
+
+        Uses `toolsdivers.get_display_name` which consults
+        `genericsettings.display_name_map`.
+        """
+        try:
+            alg = self.algId
+        except Exception:
+            alg = getattr(self, '_data_folder', None)
+        return toolsdivers.get_display_name(alg)
+
     def __init__(self, header, comment, data, indexfile):
         """Instantiate a DataSet.
 
@@ -1428,7 +1442,11 @@ class DataSet(object):
             targets[-1] = self.target[-1]
         targets = sorted(set(targets), reverse=True)  # remove dupicates and sort
 
-        sinfo = 'Algorithm: ' + str(self.algId)
+        # show a human-friendly algorithm name in info displays
+        try:
+            sinfo = 'Algorithm: ' + str(self.displayName)
+        except Exception:
+            sinfo = 'Algorithm: ' + str(self.algId)
         sinfo += '\nFunction ID: ' + str(self.funcId)
         sinfo += '\nDimension DIM = ' + str(self.dim)
         sinfo += '\nNumber of trials: ' + str(self.nbRuns())
@@ -2622,7 +2640,12 @@ class DataSet(object):
         plt.xlabel('function evaluations')
         plt.xlim(left=0.85)  # right=max(self.maxevals)
         plt.ylim(bottom=smallest_target if smallest_target is not None else self.precision)
-        plt.title("%s: F%d in dimension %d" % (self.algId[:33], self.funcId, self.dim))
+        # use the human-friendly display name for titles (truncate like before)
+        try:
+            disp = toolsdivers.display_wrap(self.displayName or self.algId, width=33)
+        except Exception:
+            disp = (self.algId[:33] if hasattr(self, 'algId') else '')
+        plt.title("%s: F%d in dimension %d" % (disp, self.funcId, self.dim))
         plt.grid(True)
         return plt.gca()  # not sure which makes most sense
 

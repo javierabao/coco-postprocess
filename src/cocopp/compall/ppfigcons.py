@@ -555,10 +555,14 @@ def main(dictAlg, html_file_prefix, sorted_algorithms=None, output_dir='ppdata',
 
                     # For legend
                     # tmp = plt.plot([], [], label=alg.replace('..' + os.sep, '').strip(os.sep), **line_styles[i])
-                    algorithm_name = toolsdivers.str_to_latex(toolsdivers.strip_pathname1(alg))
+                    base = toolsdivers.strip_pathname1(alg)
+                    display = toolsdivers.get_display_name(base)
+                    algorithm_name = toolsdivers.str_to_latex(display)
                     if plotting_style.in_background:
                         algorithm_name = '_' + algorithm_name
-                    tmp = plt.plot([], [], label=algorithm_name[:legend_text_max_len], **line_styles[i])
+                    # use human-friendly display name for visible legend (wrapped)
+                    wrapped = toolsdivers.display_wrap(algorithm_name, width=legend_text_max_len)
+                    tmp = plt.plot([], [], label=wrapped, **line_styles[i])
                     plt.setp(tmp[0], markersize=12.,
                              markeredgecolor=plt.getp(tmp[0], 'color'))
                     functions_with_legend = testbedsettings.current_testbed.functions_with_legend
@@ -668,7 +672,9 @@ def main(dictAlg, html_file_prefix, sorted_algorithms=None, output_dir='ppdata',
             symb_html = '<span style="color:%s;">%s</span>' % (styles[i]['color'], marker_to_html(styles[i]['marker']))
             
             alg_definitions.append((', ' if i > 0 else '') + '%s: %s' % (symb, '\\algorithm' + abc[i % len(abc)]))
-            alg_definitions_html += (', ' if i > 0 else '') + '%s: %s' % (symb_html, toolsdivers.str_to_latex(toolsdivers.strip_pathname1(sorted_algorithms[i])))
+            alg_definitions_html += (', ' if i > 0 else '') + '%s: %s' % (
+                symb_html,
+                toolsdivers.str_to_latex(toolsdivers.get_display_name(toolsdivers.strip_pathname1(sorted_algorithms[i]))))
         toolsdivers.prepend_to_file(latex_commands_file,
                 [providecolorsforlatex()]) # needed since the latest change in ACM template
         toolsdivers.prepend_to_file(latex_commands_file,

@@ -18,7 +18,7 @@ from . import genericsettings, config, ppfig, testbedsettings, findfiles
 from . import pproc, pptex, pprldistr
 from .pproc import DataSetList, processInputArgs
 from .ppfig import Usage
-from .toolsdivers import prepend_to_file, strip_pathname1, str_to_latex, replace_in_file
+from .toolsdivers import prepend_to_file, strip_pathname1, str_to_latex, replace_in_file, get_display_name
 from .compall import pprldmany, pptables, ppfigs, ppfigcons
 from .comp2 import pprldistr2, ppscatter
 
@@ -84,7 +84,7 @@ def main(args, outputdir):
 
     """
 
-    print("\nPost-processing (2+)");
+    print("\nPost-processing (2+)")
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
         if genericsettings.verbose:
@@ -97,12 +97,13 @@ def main(args, outputdir):
     # first prepare list of sorted algorithm names as displayed
     algs = []
     for alg in args:
-        algs.append(str_to_latex(strip_pathname1(alg)))
+        base = strip_pathname1(alg)
+        algs.append(str_to_latex(get_display_name(base)))
     algs.sort()
     # now ready for writing the sorted algorithms as \providecommand in tex-command file
     for i, alg in enumerate(algs):
         lines.append('\\providecommand{\\algorithm' + pptex.numtotext(i) +
-                     '}{' + str_to_latex(strip_pathname1(alg)) + '}')
+                     '}{' + alg + '}')
     prepend_to_file(latex_commands_file, lines, 5000,
                     'bbob_proc_commands.tex truncated, consider removing '
                     + 'the file before the text run'
@@ -222,8 +223,8 @@ def main(args, outputdir):
                               'results will be mixed in the "all functions" ' +
                               'ECDF figures.')
 
-            algorithm_name0 = str_to_latex(strip_pathname1(sortedAlgs[0]))
-            algorithm_name1 = str_to_latex(strip_pathname1(sortedAlgs[1]))
+            algorithm_name0 = str_to_latex(get_display_name(strip_pathname1(sortedAlgs[0])))
+            algorithm_name1 = str_to_latex(get_display_name(strip_pathname1(sortedAlgs[1])))
 
             algorithm_name = "%s vs %s" % (algorithm_name1, algorithm_name0)
             ppfig.save_single_functions_html(
@@ -397,9 +398,9 @@ def main(args, outputdir):
         print("Scatter plots...")
 
         ds_list0 = dictAlg[sortedAlgs[0]]
-        algorithm_name0 = str_to_latex(strip_pathname1(sortedAlgs[0]))
+        algorithm_name0 = str_to_latex(get_display_name(strip_pathname1(sortedAlgs[0])))
         ds_list1 = dictAlg[sortedAlgs[1]]
-        algorithm_name1 = str_to_latex(strip_pathname1(sortedAlgs[1]))
+        algorithm_name1 = str_to_latex(get_display_name(strip_pathname1(sortedAlgs[1])))
 
         algorithm_name = "%s vs %s" % (algorithm_name1, algorithm_name0)
         ppfig.save_single_functions_html(
@@ -421,7 +422,7 @@ def main(args, outputdir):
 
         replace_in_file(html_file_name, '##bbobppscatterlegend##', ppscatter.figure_caption(for_html=True))
         for i, alg in enumerate(args):
-            replace_in_file(html_file_name, 'algorithm' + pptex.numtotext(i), str_to_latex(strip_pathname1(alg)))
+            replace_in_file(html_file_name, 'algorithm' + pptex.numtotext(i), str_to_latex(get_display_name(strip_pathname1(alg))))
 
         print_done()
 

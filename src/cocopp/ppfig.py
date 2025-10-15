@@ -177,7 +177,8 @@ def save_index_html_file(filename):
         many_algorithm_file = '%s.html' % genericsettings.many_algorithm_file_name
         for root, _dirs, files in os.walk(current_dir):
             for elem in sorted(_dirs):
-                comparison_links += add_link(current_dir, elem, many_algorithm_file, elem, indent)
+                comparison_links += add_link(current_dir, elem, many_algorithm_file,
+                                             toolsdivers.get_display_name(elem), indent)
 
         if comparison_links:
             f.write('<H2>Comparison data</H2>\n')
@@ -187,7 +188,8 @@ def save_index_html_file(filename):
         single_algorithm_file = '%s.html' % genericsettings.single_algorithm_file_name
         for root, _dirs, files in os.walk(current_dir):
             for elem in sorted(_dirs):
-                f.write(add_link(current_dir, elem, single_algorithm_file, elem, indent))
+                f.write(add_link(current_dir, elem, single_algorithm_file,
+                                 toolsdivers.get_display_name(elem), indent))
 
         f.write("\n</BODY>\n</HTML>")
 
@@ -326,11 +328,16 @@ def save_single_functions_html(filename,
 
     name = filename.split(os.sep)[-1]
     current_dir = os.path.dirname(os.path.realpath(filename))
+    # derive a human-friendly display name for the header (keep algname for internal ids)
+    try:
+        display_algname = toolsdivers.get_display_name(algname)
+    except Exception:
+        display_algname = algname
     with open(filename + add_to_names + '.html', 'w') as f:
-        header_title = algname + ', ' + name + add_to_names
+        header_title = display_algname + ', ' + name + add_to_names
         links = get_parent_link(htmlPage, parentFileName)
 
-        f.write(html_header % (header_title.lstrip(',').strip(), algname, links))
+        f.write(html_header % (header_title.lstrip(',').strip(), display_algname, links))
 
         if function_groups is None:
             function_groups = OrderedDict([])

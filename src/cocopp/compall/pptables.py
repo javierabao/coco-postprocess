@@ -12,7 +12,7 @@ import numpy
 from .. import genericsettings, bestalg, toolsstats, pproc, ppfigparam, testbedsettings, captions, ppfig
 from ..pptex import writeFEvals2, writeFEvalsMaxPrec, tableXLaTeX, numtotext
 from ..toolsstats import significancetest, significance_all_best_vs_other, best_alg_indices
-from ..toolsdivers import str_to_latex, strip_pathname1, strip_pathname3, replace_in_file, get_version_label, prepend_to_file
+from ..toolsdivers import str_to_latex, strip_pathname1, strip_pathname3, replace_in_file, get_version_label, prepend_to_file, get_display_name
 
 
 def get_table_caption():
@@ -546,8 +546,9 @@ def main(dict_alg, sorted_algs, output_dir='.', function_targets_line=True, late
             command_name = r'\alg%stables' % numtotext(i)
             #            header += r'\providecommand{%s}{{%s}{}}' % (command_name, str_to_latex(strip_pathname(alg)))
             if df[0] == testbedsettings.current_testbed.tabDimsOfInterest[0]:
+                display = str_to_latex(get_display_name(strip_pathname1(alg)))
                 additional_commands.append('\\providecommand{%s}{\\StrLeft{%s}{\\ntables}}' %
-                                           (command_name, str_to_latex(strip_pathname1(alg))))
+                                           (command_name, display))
             curline = [command_name + r'\hspace*{\fill}']  # each list element becomes a &-separated table entry?
             curlineHtml = ['<th style="width:%dpx">%s</th>\n' % (
                 table_first_column_width, str_to_latex(strip_pathname3(alg)))]

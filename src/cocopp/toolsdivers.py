@@ -9,10 +9,84 @@ import tempfile, shutil
 from collections import OrderedDict as _OrderedDict
 import re as _re
 import numpy as np
+import textwrap
 from matplotlib import pyplot as plt
 from subprocess import CalledProcessError, STDOUT
 
 from . import genericsettings, testbedsettings
+
+
+def get_display_name(name):
+    """Return a human-friendly display name for `name` using
+    `genericsettings.display_name_map` when available.
+
+    The lookup tries, in order:
+      1. exact key match
+      2. basename(name) exact match (strip any path components)
+      3. case-insensitive match of the above
+    Falls back to returning `name` unchanged.
+    """
+    if not name:
+        return name
+    mapping = getattr(genericsettings, 'display_name_map', None) or {}
+    if name in mapping:
+        return mapping[name]
+    base = os.path.basename(name)
+    if base in mapping:
+        return mapping[base]
+    # try lowercase matching
+    lower_map = {k.lower(): v for k, v in mapping.items()}
+    if name.lower() in lower_map:
+        return lower_map[name.lower()]
+    if base.lower() in lower_map:
+        return lower_map[base.lower()]
+    # Fallback: try substring/token matching. This helps when folder names
+    # include extra pieces (timestamps, prefixes) but still contain the
+    # canonical algorithm/archive name somewhere inside. We match longest
+    # mapping keys first to avoid accidental short substring matches.
+    if mapping:
+        keys_sorted = sorted(mapping.keys(), key=lambda k: len(str(k)), reverse=True)
+        name_low = name.lower()
+        base_low = base.lower()
+        for k in keys_sorted:
+            try:
+                kl = str(k).lower()
+            except Exception:
+                continue
+            if not kl:
+                continue
+            if kl in name_low or kl in base_low:
+                return mapping[k]
+    return name
+
+
+def display_wrap(s, width=22):
+    """Return a version of `s` wrapped to `width` characters using newline
+    breaks. Useful for legend entries and axis labels where long algorithm
+    names should be readable without truncation.
+
+    Examples:
+        display_wrap('VeryLongAlgorithmName (Author, 2019)', width=20)
+        -> 'VeryLongAlgorithmName\n(Author, 2019)'
+    """
+    if s is None:
+        return ''
+    try:
+        text = str(s)
+    except Exception:
+        return ''
+    # Use textwrap to break at word boundaries; preserve existing newlines
+    parts = []
+    for para in text.split('\n'):
+        if not para:
+            parts.append('')
+            continue
+        wrapped = textwrap.wrap(para, width=width)
+        if not wrapped:
+            parts.append(para)
+        else:
+            parts.append('\n'.join(wrapped))
+    return '\n'.join(parts)
 
 class Infolder(object):
     """Contextmanager to do some work in a folder of choice and change dir

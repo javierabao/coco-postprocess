@@ -27,7 +27,7 @@ import warnings, getopt, numpy as np
 from . import genericsettings, testbedsettings, config, ppfig, pptable, pprldistr, ppfigdim, ppfigcons1, pplogloss, findfiles
 from .pproc import DataSetList, store_reference_values, dictAlgByDim
 from .ppfig import Usage
-from .toolsdivers import print_done, prepend_to_file, strip_pathname1, str_to_latex, get_version_label, replace_in_file
+from .toolsdivers import print_done, prepend_to_file, str_to_latex, get_version_label, replace_in_file, strip_pathname1, get_display_name
 from . import ppconverrorbars
 from .compall import pprldmany, ppfigs
 
@@ -134,7 +134,9 @@ def main(alg, outputdir, argv=None):
 
     dictFunc = dsList.dictByFunc()
     if dictFunc[list(dictFunc.keys())[0]][0].algId not in ("", "ALG"):
-        algorithm_string = " for Algorithm %s" % dictFunc[list(dictFunc.keys())[0]][0].algId
+        base_alg = strip_pathname1(dictFunc[list(dictFunc.keys())[0]][0].algId)
+        display_alg = get_display_name(base_alg)
+        algorithm_string = " for Algorithm %s" % display_alg
     else:
         algorithm_string = ""
     page_title = 'Results%s on the <TT>%s</TT> Benchmark Suite' % \
