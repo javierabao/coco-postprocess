@@ -31,11 +31,12 @@ from .toolsdivers import print_done, prepend_to_file, strip_pathname1, str_to_la
 from . import ppconverrorbars
 from .compall import pprldmany, ppfigs
 
-__all__ = ['main']
+__all__ = ["main"]
 
 
 def usage():
     print(main.__doc__)
+
 
 def main(alg, outputdir, argv=None):
     r"""Post-processing COCO data of a single algorithm.
@@ -58,8 +59,8 @@ def main(alg, outputdir, argv=None):
     system shell arguments are handled there.
     """
 
-    if (not genericsettings.verbose):
-        warnings.simplefilter('module')
+    if not genericsettings.verbose:
+        warnings.simplefilter("module")
         # warnings.simplefilter('ignore')
 
     # Gets directory name if outputdir is a archive file.
@@ -78,9 +79,9 @@ def main(alg, outputdir, argv=None):
     print("    this might take several minutes.")
 
     if genericsettings.isNoisy and not genericsettings.isNoiseFree:
-        dsList = dsList.dictByNoise().get('nzall', DataSetList())
+        dsList = dsList.dictByNoise().get("nzall", DataSetList())
     if genericsettings.isNoiseFree and not genericsettings.isNoisy:
-        dsList = dsList.dictByNoise().get('noiselessall', DataSetList())
+        dsList = dsList.dictByNoise().get("noiselessall", DataSetList())
 
     # filter to allow postprocessing data from different test suites:
     dsList = testbedsettings.current_testbed.filter(dsList)
@@ -97,21 +98,18 @@ def main(alg, outputdir, argv=None):
         for i in dsList:
             # check whether current set of instances correspond to correct
             # setting of a BBOB workshop and issue a warning otherwise:
-            curr_instances = (dict((j, i.instancenumbers.count(j)) for j in set(i.instancenumbers)))
+            curr_instances = dict((j, i.instancenumbers.count(j)) for j in set(i.instancenumbers))
             correct = False
             for instance_set_of_interest in genericsettings.instancesOfInterest:
                 if curr_instances == instance_set_of_interest:
                     correct = True
             if not correct:
-                warnings.warn('The data of %s do not list ' % i +
-                              'the correct instances ' +
-                              'of function F%d.' % i.funcId)
+                warnings.warn("The data of %s do not list " % i + "the correct instances " + "of function F%d." % i.funcId)
 
     dictAlg = dsList.dictByAlg()
 
     if len(dictAlg) > 1:
-        warnings.warn('Data with multiple algId %s ' % str(dictAlg.keys()) +
-                      'will be processed together.')
+        warnings.warn("Data with multiple algId %s " % str(dictAlg.keys()) + "will be processed together.")
         # TODO: in this case, all is well as long as for a given problem
         # (given dimension and function) there is a single instance of
         # DataSet associated. If there are more than one, the first one only
@@ -121,13 +119,13 @@ def main(alg, outputdir, argv=None):
         if not os.path.exists(outputdir):
             os.makedirs(outputdir)
             if genericsettings.verbose:
-                print('Folder %s was created.' % (outputdir))
+                print("Folder %s was created." % (outputdir))
         if not os.path.exists(algoutputdir):
             os.makedirs(algoutputdir)
             if genericsettings.verbose:
-                print('Folder %s was created.' % (algoutputdir))
+                print("Folder %s was created." % (algoutputdir))
 
-    latex_commands_file = os.path.join(outputdir, 'cocopp_commands.tex')
+    latex_commands_file = os.path.join(outputdir, "cocopp_commands.tex")
 
     if genericsettings.isPickled:
         dsList.pickle()
@@ -137,12 +135,13 @@ def main(alg, outputdir, argv=None):
         algorithm_string = " for Algorithm %s" % dictFunc[list(dictFunc.keys())[0]][0].algId
     else:
         algorithm_string = ""
-    page_title = 'Results%s on the <TT>%s</TT> Benchmark Suite' % \
-                 (algorithm_string, dictFunc[list(dictFunc.keys())[0]][0].suite_name)
-    ppfig.save_single_functions_html(os.path.join(algoutputdir, genericsettings.single_algorithm_file_name),
-                                     page_title,
-                                     htmlPage=ppfig.HtmlPage.ONE,
-                                     function_groups=dsList.getFuncGroups())
+    page_title = "Results%s on the <TT>%s</TT> Benchmark Suite" % (algorithm_string, dictFunc[list(dictFunc.keys())[0]][0].suite_name)
+    ppfig.save_single_functions_html(
+        os.path.join(algoutputdir, genericsettings.single_algorithm_file_name),
+        page_title,
+        htmlPage=ppfig.HtmlPage.ONE,
+        function_groups=dsList.getFuncGroups(),
+    )
 
     values_of_interest = testbedsettings.current_testbed.ppfigdim_target_values
     if genericsettings.isFig:
@@ -159,9 +158,7 @@ def main(alg, outputdir, argv=None):
 
     if genericsettings.isConv:
         print("Generating convergence plots...")
-        ppconverrorbars.main(dictAlg,
-                             algoutputdir,
-                             genericsettings.single_algorithm_file_name)
+        ppconverrorbars.main(dictAlg, algoutputdir, genericsettings.single_algorithm_file_name)
         print_done()
 
     if genericsettings.isTab:
@@ -171,12 +168,12 @@ def main(alg, outputdir, argv=None):
         dims = sorted(dict_dim_list)
 
         ppfig.save_single_functions_html(
-            os.path.join(algoutputdir, 'pptable'),
+            os.path.join(algoutputdir, "pptable"),
             dimensions=dims,
             htmlPage=ppfig.HtmlPage.PPTABLE,
-            parentFileName=genericsettings.single_algorithm_file_name)
-        replace_in_file(os.path.join(algoutputdir, 'pptable.html'), '??COCOVERSION??',
-                        '<br />Data produced with COCO %s' % (get_version_label(None)))
+            parentFileName=genericsettings.single_algorithm_file_name,
+        )
+        replace_in_file(os.path.join(algoutputdir, "pptable.html"), "??COCOVERSION??", "<br />Data produced with COCO %s" % (get_version_label(None)))
 
         for noise, sliceNoise in dictNoise.items():
             pptable.main(sliceNoise, dims, algoutputdir, latex_commands_file)
@@ -186,10 +183,12 @@ def main(alg, outputdir, argv=None):
         print("ECDF graphs...")
         dictNoise = dsList.dictByNoise()
         if len(dictNoise) > 1:
-            warnings.warn('Data for functions from both the noisy and '
-                          'non-noisy testbeds have been found. Their '
-                          'results will be mixed in the "all functions" '
-                          'ECDF figures.')
+            warnings.warn(
+                "Data for functions from both the noisy and "
+                "non-noisy testbeds have been found. Their "
+                'results will be mixed in the "all functions" '
+                "ECDF figures."
+            )
         dictDim = dsList.dictByDim()
         for dim in testbedsettings.current_testbed.rldDimsOfInterest:
             try:
@@ -201,41 +200,33 @@ def main(alg, outputdir, argv=None):
 
             # If there is only one noise type then we don't need the all graphs.
             if len(dictNoise) > 1:
-                pprldistr.main(sliceDim, True, algoutputdir, 'all')
+                pprldistr.main(sliceDim, True, algoutputdir, "all")
 
             for noise, sliceNoise in dictNoise.items():
-                pprldistr.main(sliceNoise, True, algoutputdir, '%s' % noise)
+                pprldistr.main(sliceNoise, True, algoutputdir, "%s" % noise)
 
             dictFG = sliceDim.dictByFuncGroup()
             for fGroup, sliceFuncGroup in sorted(dictFG.items()):
-                pprldistr.main(sliceFuncGroup, True,
-                               algoutputdir,
-                               '%s' % fGroup)
+                pprldistr.main(sliceFuncGroup, True, algoutputdir, "%s" % fGroup)
 
             pprldistr.fmax = None  # Resetting the max final value
             pprldistr.evalfmax = None  # Resetting the max #fevalsfactor
         print_done()
 
-        if genericsettings.isRldOnSingleFcts: # copy-paste from above, here for each function instead of function groups
+        if genericsettings.isRldOnSingleFcts:  # copy-paste from above, here for each function instead of function groups
             # ECDFs for each function
             print("ECDF graphs per function...")
-            pprldmany.all_single_functions(dictAlg,
-                                           True,
-                                           None,
-                                           algoutputdir,
-                                           genericsettings.single_algorithm_file_name,
-                                           settings=genericsettings)
+            pprldmany.all_single_functions(dictAlg, True, None, algoutputdir, genericsettings.single_algorithm_file_name, settings=genericsettings)
             print_done()
 
     if genericsettings.isLogLoss:
         print("ERT loss ratio figures and tables...")
         for ng, sliceNoise in dsList.dictByNoise().items():
-            if ng == 'noiselessall':
-                testbed = 'noiseless'
-            elif ng == 'nzall':
-                testbed = 'noisy'
-            txt = ("Please input crafting effort value "
-                   + "for %s testbed:\n  CrE = " % testbed)
+            if ng == "noiselessall":
+                testbed = "noiseless"
+            elif ng == "nzall":
+                testbed = "noisy"
+            txt = "Please input crafting effort value " + "for %s testbed:\n  CrE = " % testbed
             CrE = genericsettings.inputCrE
             while CrE is None:
                 try:
@@ -248,48 +239,34 @@ def main(alg, outputdir, argv=None):
                     sliceDim = dictDim[d]
                 except KeyError:
                     continue
-                info = '%s' % ng
+                info = "%s" % ng
                 pplogloss.main(sliceDim, CrE, True, algoutputdir, info)
                 pplogloss.generateTable(sliceDim, CrE, algoutputdir, info)
                 for fGroup, sliceFuncGroup in sliceDim.dictByFuncGroup().items():
-                    info = '%s' % fGroup
-                    pplogloss.main(sliceFuncGroup, CrE, True,
-                                   algoutputdir, info)
+                    info = "%s" % fGroup
+                    pplogloss.main(sliceFuncGroup, CrE, True, algoutputdir, info)
         print_done()
 
-    prepend_to_file(latex_commands_file,
-                    ['\\providecommand{\\bbobloglosstablecaption}[1]{',
-                     pplogloss.table_caption(), '}'])
-    prepend_to_file(latex_commands_file,
-                    ['\\providecommand{\\bbobloglossfigurecaption}[1]{',
-                     pplogloss.figure_caption(), '}'])
-    prepend_to_file(latex_commands_file,
-                    ['\\providecommand{\\bbobpprldistrlegend}[1]{',
-                     pprldistr.caption_single(),  # depends on the config setting, should depend on maxfevals
-                     '}'])
+    prepend_to_file(latex_commands_file, ["\\providecommand{\\bbobloglosstablecaption}[1]{", pplogloss.table_caption(), "}"])
+    prepend_to_file(latex_commands_file, ["\\providecommand{\\bbobloglossfigurecaption}[1]{", pplogloss.figure_caption(), "}"])
+    prepend_to_file(
+        latex_commands_file,
+        [
+            "\\providecommand{\\bbobpprldistrlegend}[1]{",
+            pprldistr.caption_single(),  # depends on the config setting, should depend on maxfevals
+            "}",
+        ],
+    )
     # html_file = os.path.join(outputdir, 'pprldistr.html') # remove this line???
-    prepend_to_file(latex_commands_file,
-                    ['\\providecommand{\\bbobppfigdimlegend}[1]{',
-                     ppfigdim.scaling_figure_caption(),
-                     '}'])
-    prepend_to_file(latex_commands_file,
-                    ['\\providecommand{\\bbobpptablecaption}[1]{',
-                     pptable.get_table_caption(),
-                     '}'])
-    prepend_to_file(latex_commands_file,
-                    ['\\providecommand{\\bbobecdfcaptionsinglefcts}[2]{',
-                     ppfigs.get_ecdfs_single_fcts_caption(),
-                     '}'])
-    prepend_to_file(latex_commands_file,
-                    ['\\providecommand{\\bbobecdfcaptionallgroups}[1]{',
-                     ppfigs.get_ecdfs_all_groups_caption(),
-                     '}'])
-    prepend_to_file(latex_commands_file,
-                    ['\\providecommand{\\algfolder}{' + algfolder + '/}'])
-    prepend_to_file(latex_commands_file,
-                    ['\\providecommand{\\algname}{' +
-                     (str_to_latex(strip_pathname1(alg[0])) if len(alg) == 1 else str_to_latex(dsList[0].algId)) + '{}}'])
-    print("Output data written to folder %s" %
-          os.path.join(os.getcwd(), algoutputdir))
+    prepend_to_file(latex_commands_file, ["\\providecommand{\\bbobppfigdimlegend}[1]{", ppfigdim.scaling_figure_caption(), "}"])
+    prepend_to_file(latex_commands_file, ["\\providecommand{\\bbobpptablecaption}[1]{", pptable.get_table_caption(), "}"])
+    prepend_to_file(latex_commands_file, ["\\providecommand{\\bbobecdfcaptionsinglefcts}[2]{", ppfigs.get_ecdfs_single_fcts_caption(), "}"])
+    prepend_to_file(latex_commands_file, ["\\providecommand{\\bbobecdfcaptionallgroups}[1]{", ppfigs.get_ecdfs_all_groups_caption(), "}"])
+    prepend_to_file(latex_commands_file, ["\\providecommand{\\algfolder}{" + algfolder + "/}"])
+    prepend_to_file(
+        latex_commands_file,
+        ["\\providecommand{\\algname}{" + (str_to_latex(strip_pathname1(alg[0])) if len(alg) == 1 else str_to_latex(dsList[0].algId)) + "{}}"],
+    )
+    print("Output data written to folder %s" % os.path.join(os.getcwd(), algoutputdir))
 
     return dsList.dictByAlg()

@@ -18,4 +18,5 @@ src/cocopp/**/*.dat
 src/cocopp/**/*.tdat
 src/cocopp/**/*.info
 dist/
-ppdata/
+ppdata/uv.lock
+uv.lock

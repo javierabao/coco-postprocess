@@ -28,6 +28,7 @@ from . import genericsettings, testbedsettings, dataformatsettings
 from pdb import set_trace
 from six import string_types, advance_iterator
 
+
 # CLASS DEFINITIONS
 class MultiReader(list):
     """List of data arrays to be aligned.
@@ -67,7 +68,7 @@ class MultiReader(list):
 
     def __init__(self, data, isHArray=False):
         """accepts a list of arrays or a `MultiReader` (i.e. a list of
-        `SingleReader`) as input `data` type """
+        `SingleReader`) as input `data` type"""
         self.isHArray = isHArray
         try:  # we act like data is a MultiReader
             #  this is meant to make a reset-copy of MultiReader
@@ -111,7 +112,7 @@ class MultiReader(list):
 
         def __init__(self, data, isHArray=False):
             if len(data) == 0:
-                raise ValueError('Empty data array.')
+                raise ValueError("Empty data array.")
             self.data = numpy.asarray(data)
             self.it = self.data.__iter__()
             self.isNearlyFinished = False
@@ -204,10 +205,10 @@ class HMultiReader(MultiReader):
         # idxCurrentF is a float for the extreme case where it is infinite.
         # else it is an integer and then is the 'i' in 10**(i/nbPtsF)
         self.isNegative = False
-        self.idxCurrentFOld = 0.
+        self.idxCurrentFOld = 0.0
 
     def calculateCurrentValue(self):
-        factor = -1. if self.isNegative else 1.
+        factor = -1.0 if self.isNegative else 1.0
         return factor * numpy.power(10, self.idxCurrentF / self.nbPtsF)
 
     def isFinished(self):
@@ -253,17 +254,16 @@ class HMultiReader(MultiReader):
 
         # This should not happen
         if not fvalues:
-            raise ValueError('Value %g is not reached.')
+            raise ValueError("Value %g is not reached.")
 
         maxf = max(fvalues)
-        if maxf <= 0.:
-            if currentValue > 0.:
+        if maxf <= 0.0:
+            if currentValue > 0.0:
                 self.idxCurrentFOld = self.idxCurrentF
                 self.idxCurrentF = -numpy.inf
-                currentValue = 0.
+                currentValue = 0.0
             else:
-                self.idxCurrentF = max((self.idxCurrentF,
-                        numpy.floor(numpy.log10(-maxf + 1e-12) * self.nbPtsF)))
+                self.idxCurrentF = max((self.idxCurrentF, numpy.floor(numpy.log10(-maxf + 1e-12) * self.nbPtsF)))
                 currentValue = self.calculateCurrentValue()
         else:  # maxf > 0
             # it is not quite clear what this correction is for
@@ -272,8 +272,7 @@ class HMultiReader(MultiReader):
                 maxf -= 1e-12  # this gave warnings for too small maxf-values
             else:
                 maxf /= 2
-            self.idxCurrentF = min(self.idxCurrentF,
-                                   numpy.ceil(numpy.log10(maxf) * self.nbPtsF))
+            self.idxCurrentF = min(self.idxCurrentF, numpy.ceil(numpy.log10(maxf) * self.nbPtsF))
             # Above line may return: Warning: divide by zero encountered in
             # log10 in the case of negative fvalues.
             # In the case of negative values for fvalues, self.idxCurrentF
@@ -292,7 +291,7 @@ class ArrayMultiReader(MultiReader):
 
     This class is used for dealing with the output of
     :py:class:`MultiReader`:
-    
+
     * From *raw* data arrays, :py:class:`MultiReader` generates aligned
       data arrays (first column is the alignment value, subsequent
       columns are aligned data).
@@ -341,7 +340,7 @@ class HArrayMultiReader(ArrayMultiReader, HMultiReader):
         self.nbPtsF = testbedsettings.current_testbed.number_of_points
         self.idxCurrentF = numpy.inf  # Minimization
         self.isNegative = False
-        self.idxCurrentFOld = 0.
+        self.idxCurrentFOld = 0.0
 
 
 # FUNCTION DEFINITIONS
@@ -359,8 +358,7 @@ def align_data(data, idx_evals, idx_funvals, rewind_reader=False):
         elif isinstance(data, VMultiReader):
             data = VMultiReader(data)
         else:
-            raise TypeError("reset class %s not implemented"
-                            % type(data))
+            raise TypeError("reset class %s not implemented" % type(data))
 
     keep_idxData, keep_idx = data.idxData, data.idx
     # This is terrible but needed, because several columns idxData need
@@ -373,11 +371,9 @@ def align_data(data, idx_evals, idx_funvals, rewind_reader=False):
         data.idxData = idx_funvals
         data.idx = idx_evals
     else:
-        raise TypeError("reset class %s not implemented"
-                        % type(data))
+        raise TypeError("reset class %s not implemented" % type(data))
     if set((data.idxData, data.idx)) != set((idx_evals, idx_funvals)):
-        raise ValueError("indices are inconsistent " +
-                         str((idx_evals, idx_funvals, data.idx, data.idxData)))
+        raise ValueError("indices are inconsistent " + str((idx_evals, idx_funvals, data.idx, data.idxData)))
 
     res = []
     current_value = data.getInitialValue()
@@ -389,8 +385,7 @@ def align_data(data, idx_evals, idx_funvals, rewind_reader=False):
         res.append(data.align(current_value))
         current_value = data.newCurrentValue()
 
-    res = (numpy.vstack(res), numpy.asarray([i.nextLine[idx_evals] for i in data]),
-            numpy.asarray([i.nextLine[idx_funvals] for i in data]))
+    res = (numpy.vstack(res), numpy.asarray([i.nextLine[idx_evals] for i in data]), numpy.asarray([i.nextLine[idx_funvals] for i in data]))
     # Hack: at this point nextLine contains all information on the last line
     # of the data.
 
@@ -427,23 +422,23 @@ def alignArrayData(data):
 def openfile(filePath, **kwargs):
     """`kwargs` are passed to `open`"""
     if not os.path.isfile(filePath):
-        if ('win32' in sys.platform) and len(filePath) > 259:
+        if ("win32" in sys.platform) and len(filePath) > 259:
             raise IOError(2, 'The path is too long for the file "%s".' % filePath)
         else:
             raise IOError(2, 'The file "%s" does not exist.' % filePath)
     try:
-        return open(filePath, 'r', **kwargs)
+        return open(filePath, "r", **kwargs)
     except TypeError:  # prevent TypeError: 'errors' is an invalid keyword argument for this function in Jenkins test
-        if 'errors' in kwargs:
-            kwargs.pop('errors')
-        return open(filePath, 'r', **kwargs)
+        if "errors" in kwargs:
+            kwargs.pop("errors")
+        return open(filePath, "r", **kwargs)
 
 
 def split(dataFiles, idx_to_load=None, dim=None):
     """Split a list of data files into arrays corresponding to data sets.
-       The Boolean list idx_to_load is thereby indicating whether a
-       given part of the split is to be considered or not if None, all
-       instances are considered.
+    The Boolean list idx_to_load is thereby indicating whether a
+    given part of the split is to be considered or not if None, all
+    instances are considered.
     """
 
     data_sets = []
@@ -464,12 +459,12 @@ def split(dataFiles, idx_to_load=None, dim=None):
 
         # Save values in array content. Check for nan and inf.
         for line in lines:
-            if line.startswith('%'):
+            if line.startswith("%"):
                 if content:
                     if (idx_to_load is None) or (idx_to_load and len(idx_to_load) > idx and idx_to_load[idx]):
                         data_sets.append(numpy.vstack(content))
                     elif genericsettings.verbose:
-                            print('skipped instance...')
+                        print("skipped instance...")
                     # Use only the reference values from instances 1 to 5.
                     if current_instance in (1, 2, 3, 4, 5):
                         reference_values[current_instance] = current_reference_value
@@ -481,28 +476,28 @@ def split(dataFiles, idx_to_load=None, dim=None):
                     idx += 1
 
                 # Get the current instance and reference value.
-                parts = line.strip('\n').strip(r'%').split(', ')
+                parts = line.strip("\n").strip(r"%").split(", ")
                 for elem in parts:
-                    if '=' in elem:
-                        key, value = elem.split('=', 1)
-                        if key.strip() == 'instance':
+                    if "=" in elem:
+                        key, value = elem.split("=", 1)
+                        if key.strip() == "instance":
                             current_instance = int(value.strip())
-                        elif key.strip() == 'reference value':
+                        elif key.strip() == "reference value":
                             current_reference_value = float(value.strip())
-                        elif key.strip() == 'algorithm type':
-                            is_best_algorithm_data = 'best' == value.strip()
+                        elif key.strip() == "algorithm type":
+                            is_best_algorithm_data = "best" == value.strip()
 
                 continue
 
             # else remove end-of-line sign
             # and split into single strings
-            data = line.strip('\n').split()
+            data = line.strip("\n").split()
 
             # remove additional data for best algorithm
             if is_best_algorithm_data:
                 index = len(data) - 3
                 if index <= 0:
-                    warnings.warn('Invalid best algorithm data!')
+                    warnings.warn("Invalid best algorithm data!")
                 else:
                     algorithms.append(data[index])
                     successful_runs = int(data[index + 1])
@@ -511,21 +506,20 @@ def split(dataFiles, idx_to_load=None, dim=None):
                     data = data[:-3]  # remove the three processed items from data
 
             if dim and len(data) != dim + 5:
-                warnings.warn('Incomplete line %s in  ' % line +
-                              'data file %s: ' % fil)
+                warnings.warn("Incomplete line %s in  " % line + "data file %s: " % fil)
                 continue
             for index in range(len(data)):
-                if data[index] in ('Inf', 'inf'):
+                if data[index] in ("Inf", "inf"):
                     data[index] = numpy.inf
-                elif data[index] in ('-Inf', '-inf'):
+                elif data[index] in ("-Inf", "-inf"):
                     data[index] = -numpy.inf
-                elif data[index] in ('NaN', 'nan'):
+                elif data[index] in ("NaN", "nan"):
                     data[index] = numpy.nan
                 else:
                     try:
                         data[index] = float(data[index])
                     except ValueError:
-                        warnings.warn('%s is not a valid number!' % data[index])
+                        warnings.warn("%s is not a valid number!" % data[index])
                         data[index] = numpy.nan
 
             if data:
@@ -536,7 +530,7 @@ def split(dataFiles, idx_to_load=None, dim=None):
             if (idx_to_load is None) or (idx_to_load and len(idx_to_load) > idx and idx_to_load[idx]):
                 data_sets.append(numpy.vstack(content))
             elif genericsettings.verbose:
-                    print('skipped instance...')
+                print("skipped instance...")
 
             # Use only the reference values from instances 1 to 5.
             if current_instance in (1, 2, 3, 4, 5):
@@ -549,4 +543,4 @@ def split(dataFiles, idx_to_load=None, dim=None):
 
 
 def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
-    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)

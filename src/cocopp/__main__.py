@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""Calls rungeneric.py.
-
-"""
+"""Calls rungeneric.py."""
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
@@ -9,18 +7,17 @@ import sys
 try:
     from . import rungeneric
     from . import genericsettings
+
     is_module = True
 except:
     is_module = False
 import matplotlib  # just to make sure the following is actually done first
 
 
-
 def main():
-    r"""Currently it does nothing.
+    r"""Currently it does nothing."""
+    matplotlib.use("Agg")  # To avoid window popup and use without X forwarding
 
-    """
-    matplotlib.use('Agg')  # To avoid window popup and use without X forwarding
 
 if __name__ == "__main__":
     """run either tests or rungeneric.main"""

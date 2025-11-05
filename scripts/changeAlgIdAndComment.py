@@ -24,7 +24,7 @@ written: db 28/01/2010
 
 """
 
-__all__ = ['main']
+__all__ = ["main"]
 
 
 class Usage(Exception):
@@ -75,8 +75,7 @@ def main(argv=None):
 
     try:
         try:
-            opts, args = getopt.getopt(argv, "h",
-                                       ["help"])
+            opts, args = getopt.getopt(argv, "h", ["help"])
         except:
             raise Usage(sys.exc_info()[0])
 
@@ -95,17 +94,15 @@ def main(argv=None):
         # check if all arguments are there and ask for them if not:
         if len(args) < 3:
             if len(args) < 2:
-                name = input("You forgot to specify an algorithm name. " +
-                             "Please enter one (algId):")
+                name = input("You forgot to specify an algorithm name. " + "Please enter one (algId):")
                 args.append(name)
-            comment = input("You forgot to specify a comment. Please " +
-                            "enter one for algorithm " + args[1] + ":")
+            comment = input("You forgot to specify a comment. Please " + "enter one for algorithm " + args[1] + ":")
             args.append(comment)
         folder = args[0]
         # make sure that folder name ends with a '/' to be able to append
         # the file names afterwards
-        if not folder.endswith('/'):
-            folder = folder + '/'
+        if not folder.endswith("/"):
+            folder = folder + "/"
 
         algId = args[1]
         comment = args[2]
@@ -119,15 +116,15 @@ def main(argv=None):
 
         # get all .info files in folder:
         FILES = []
-        for (path, dirs, files) in os.walk(folder):
+        for path, dirs, files in os.walk(folder):
             for fname in files:
-                if fname.endswith('.info'):
+                if fname.endswith(".info"):
                     FILES.append(os.path.join(path, fname))
 
         for file in FILES:
             # open file to read and temp file to write
-            infile = open(file, 'r')
-            tempfile = open('temp.temp', 'w')
+            infile = open(file, "r")
+            tempfile = open("temp.temp", "w")
             while infile:
                 line = infile.readline()
                 if not line:
@@ -136,26 +133,26 @@ def main(argv=None):
                 # make sure that everything is copied:
                 newline = line
                 # check if something needs to be changed:
-                if line.find('algId =') >= 0 or line.find('algorithm =') >= 0:
-                    s = line.split(', ')
+                if line.find("algId =") >= 0 or line.find("algorithm =") >= 0:
+                    s = line.split(", ")
                     for i, word in enumerate(s):
-                        if word.find('algId') >= 0:
+                        if word.find("algId") >= 0:
                             # replace algId:
                             s[i] = "algId = '" + algId + "'"
-                            if len(s) == i+1:
+                            if len(s) == i + 1:
                                 # algId or algorithm last entry in this line
                                 s[i] = s[i] + "\n"
-                        elif word.find('algorithm') >= 0:
+                        elif word.find("algorithm") >= 0:
                             # replace algId:
                             s[i] = "algorithm = '" + algId + "'"
-                            if len(s) == i+1:
+                            if len(s) == i + 1:
                                 # algId or algorithm last entry in this line
                                 s[i] = s[i] + "\n"
                     newline = ", ".join(s)
 
                 else:
                     s = line.split()
-                    if s[0] == '%':
+                    if s[0] == "%":
                         newline = "% " + comment + "\n"
 
                 tempfile.write(newline)
@@ -164,7 +161,7 @@ def main(argv=None):
             tempfile.close()
             # remove old file and rename temp file accordingly
             remove(file)
-            move('temp.temp', file)
+            move("temp.temp", file)
 
             print(file + " changed")
 
@@ -172,12 +169,11 @@ def main(argv=None):
 
     except IOError as e:
         errno, strerror = e.args
-        print('>> ' + strerror + e.msg)
-        print('>> ' + errno)
-        print('for help use -h or --help')
+        print(">> " + strerror + e.msg)
+        print(">> " + errno)
+        print("for help use -h or --help")
         return 2
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

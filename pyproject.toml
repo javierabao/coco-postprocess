@@ -58,3 +58,11 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 150
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.3",
+]

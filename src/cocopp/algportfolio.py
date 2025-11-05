@@ -37,8 +37,8 @@ functions.
       cocopp.compall.pprldmany.plot(dataset, label=algname)
    cocopp.compall.pprldmany.beautify()
    legend(loc='best') # Display legend
-   plt.show()   
-   
+   plt.show()
+
 """
 
 # TODO: generalize behaviour for data sets that have different instances...
@@ -53,11 +53,13 @@ import numpy as np
 from . import pproc as pp
 from . import readalign as ra
 
-#CLASS DEFINITIONS
+# CLASS DEFINITIONS
+
 
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
+
 
 class DataSet(pp.DataSet):
     """Unit element of algorithm portfolio data set.
@@ -79,7 +81,7 @@ class DataSet(pp.DataSet):
         def _conv_evals(evals, algnb, maxevals):
             if evals > maxevals[algnb]:
                 return np.nan
-            res = 0.
+            res = 0.0
             mevals = np.asarray(maxevals)
             if evals > len(maxevals) or not isinstance(evals, int):
                 smevals = np.sort(mevals)
@@ -88,7 +90,7 @@ class DataSet(pp.DataSet):
             else:
                 for i in range(1, evals):
                     res += np.sum(i <= mevals)
-            res += np.sum(evals <= mevals[:algnb+1])
+            res += np.sum(evals <= mevals[: algnb + 1])
             return res
 
         # Checking procedure
@@ -100,14 +102,13 @@ class DataSet(pp.DataSet):
             f.add(i.funcId)
             trials.append(i.createDictInstanceCount())
         if len(f) > 1 or len(d) > 1:
-            raise Usage('%s: Expect the data of algorithms for only one '
-                        'function and one dimension.' % (dslist))
+            raise Usage("%s: Expect the data of algorithms for only one function and one dimension." % (dslist))
         elif trials[1:] != trials[:-1]:
             # this check will be superfluous if we find that all instances
             # are equivalent.
             # raise Usage('%s: Expect the data to have the same instances.'
             #             % (dslist))
-            warnings.warn('portfolio will be generated from algorithm with different instances')
+            warnings.warn("portfolio will be generated from algorithm with different instances")
 
         self.dim = d.pop()
         self.funcId = f.pop()
@@ -120,7 +121,7 @@ class DataSet(pp.DataSet):
         self.comment = tuple(comment)
 
         # Data handling
-        nbruns = dslist[0].nbRuns() # all data sets have the same #runs
+        nbruns = dslist[0].nbRuns()  # all data sets have the same #runs
         corresp = [[]] * len(dslist)
         if False:
             # find correspondence with respect to first element in dslist
@@ -145,8 +146,8 @@ class DataSet(pp.DataSet):
             for j, ds in enumerate(dslist):
                 tmpmaxevals.append(ds.maxevals[corresp[j][i]])
                 tmpfinalfunvals.append(ds.finalfunvals[corresp[j][i]])
-                tmpevals.append(ds.evals[:, np.r_[0, corresp[j][i]+1]])
-                tmpfunvals.append(ds.funvals[:, np.r_[0, corresp[j][i]+1]].copy())
+                tmpevals.append(ds.evals[:, np.r_[0, corresp[j][i] + 1]])
+                tmpfunvals.append(ds.funvals[:, np.r_[0, corresp[j][i] + 1]].copy())
             maxevals.append(np.sum(tmpmaxevals))
             finalfunvals.append(min(tmpfinalfunvals))
             tmpevals = ra.alignArrayData(ra.HArrayMultiReader(tmpevals))
@@ -172,7 +173,9 @@ class DataSet(pp.DataSet):
         self.funvals = ra.alignArrayData(ra.VArrayMultiReader(funvals))
         self.computeERTfromEvals()
 
-#FUNCTION DEFINITIONS
+
+# FUNCTION DEFINITIONS
+
 
 def build(dictAlg, sortedAlg=None):
     """Merge datasets in an algorithm portfolio.
@@ -197,7 +200,7 @@ def build(dictAlg, sortedAlg=None):
             else:
                 tmplist = j.values()
             for k in tmplist:
-                assert len(k) == 1 # one element list
+                assert len(k) == 1  # one element list
                 tmp.append(k[0])
             try:
                 tmpres.append(DataSet(tmp))

@@ -7,41 +7,41 @@ import matplotlib.pyplot as plt
 import numpy as np
 from . import toolsstats
 
-lineprops = ('color', 'linestyle', 'linewidth', 'marker', 'markeredgecolor',
-             'markeredgewidth', 'markerfacecolor', 'markerfacecoloralt',
-             'markersize')
+lineprops = ("color", "linestyle", "linewidth", "marker", "markeredgecolor", "markeredgewidth", "markerfacecolor", "markerfacecoloralt", "markersize")
 
 
 def beautify():
     a = plt.gca()
-    a.set_xscale('log')
-    a.set_yscale('log')
+    a.set_xscale("log")
+    a.set_yscale("log")
     a.grid()
-    a.set_ylabel('log10 of Df')
-    a.set_xlabel('log10 of run lengths')
+    a.set_ylabel("log10 of Df")
+    a.set_xlabel("log10 of run lengths")
     tmp = a.get_yticks()
     tmp2 = []
     for i in tmp:
-        tmp2.append('%d' % round(np.log10(i)))
+        tmp2.append("%d" % round(np.log10(i)))
     a.set_yticklabels(tmp2)
     tmp = a.get_xticks()
     tmp2 = []
     for i in tmp:
-        tmp2.append('%d' % round(np.log10(i)))
+        tmp2.append("%d" % round(np.log10(i)))
     a.set_xticklabels(tmp2)
     return a
     # TODO: label size and line width...
+
 
 def plot(dataset, **kwargs):
     """Plot function values versus function evaluations."""
 
     res = []
-    for i in dataset.funvals[:, 1:].transpose(): # loop over the rows of the transposed array
+    for i in dataset.funvals[:, 1:].transpose():  # loop over the rows of the transposed array
         h = plt.plot(dataset.funvals[:, 0], i, **kwargs)
         res.extend(h)
 
-    #TODO: make sure each line have the same properties plot properties
+    # TODO: make sure each line have the same properties plot properties
     return res
+
 
 def plot2(dataset, **kwargs):
     """Plot function values versus function evaluations.
@@ -77,36 +77,32 @@ def plot2(dataset, **kwargs):
     xdata = dataset.funvals[:, 0]
     res = []
     # plot
-    res.extend(plt.plot(xdata[xdata <= np.median(dataset.maxevals)],
-                        data[xdata <= np.median(dataset.maxevals), medidx],
-                        **kwargs))
+    res.extend(plt.plot(xdata[xdata <= np.median(dataset.maxevals)], data[xdata <= np.median(dataset.maxevals), medidx], **kwargs))
     props = dict((i, plt.getp(res[-1], i)) for i in lineprops)
-    res.extend(plt.plot(xdata[xdata <= min(dataset.maxevals)],
-                        data[xdata <= min(dataset.maxevals), 0],
-                        **props))
+    res.extend(plt.plot(xdata[xdata <= min(dataset.maxevals)], data[xdata <= min(dataset.maxevals), 0], **props))
     res.extend(plt.plot(xdata, data[:, -1], **props))
     for i in res:
-        plt.setp(i, 'marker', '')
+        plt.setp(i, "marker", "")
 
     finalpoints = np.vstack((dataset.maxevals, dataset.finalfunvals)).T
-    sortedfpoints = np.vstack(sorted(finalpoints,
-                                     cmp=lambda x, y: cmp(list(x), list(y))))  # noqa: F821
+    sortedfpoints = np.vstack(sorted(finalpoints, cmp=lambda x, y: cmp(list(x), list(y))))  # noqa: F821
     # sort final points like a list of 2-element sequences
     res.extend(plt.plot(sortedfpoints[:, 0], sortedfpoints[:, 1], **props))
-    plt.setp(res[-1], marker='+', markeredgewidth=props['linewidth'],
-             markersize=5*props['linewidth'], linestyle='')
+    plt.setp(res[-1], marker="+", markeredgewidth=props["linewidth"], markersize=5 * props["linewidth"], linestyle="")
 
-    xmarkers = (_findfrombelow(xdata, min(dataset.maxevals) ** .5),
-                min(dataset.maxevals),
-                _findfrombelow(xdata, np.median(dataset.maxevals)),
-                max(dataset.maxevals))
+    xmarkers = (
+        _findfrombelow(xdata, min(dataset.maxevals) ** 0.5),
+        min(dataset.maxevals),
+        _findfrombelow(xdata, np.median(dataset.maxevals)),
+        max(dataset.maxevals),
+    )
     xmarkersprctile = (0, 0, 50, 100)
     for x, p in zip(xmarkers, xmarkersprctile):
-        tmp = (p <= prctiles)
-        res.extend(plt.plot(np.sum(tmp) * [x], data[xdata == x, tmp],
-                            **props))
-        plt.setp(res[-1], linestyle='')
+        tmp = p <= prctiles
+        res.extend(plt.plot(np.sum(tmp) * [x], data[xdata == x, tmp], **props))
+        plt.setp(res[-1], linestyle="")
     return res
+
 
 def generatefig(dsList):
     """Plot function values versus function evaluations for multiple sets."""
@@ -115,9 +111,9 @@ def generatefig(dsList):
         plot(i)
         beautify()
 
+
 def main(dsList, outputdir):
     """Generate output image files of function values vs. function evaluations."""
 
     generatefigure(dsList)  # noqa: F821
     # TODO: save, close
-

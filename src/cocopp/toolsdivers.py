@@ -1,9 +1,8 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Various tools. 
+"""Various tools."""
 
-"""
 import os, time, warnings
 import tempfile, shutil
 from collections import OrderedDict as _OrderedDict
@@ -13,6 +12,7 @@ from matplotlib import pyplot as plt
 from subprocess import CalledProcessError, STDOUT
 
 from . import genericsettings, testbedsettings
+
 
 class Infolder(object):
     """Contextmanager to do some work in a folder of choice and change dir
@@ -31,11 +31,14 @@ class Infolder(object):
     >>> assert dir_ == os.getcwd()
 
     """
+
     def __init__(self, foldername):
         self.target_dir = foldername
+
     def __enter__(self):
         self.root_dir = os.getcwd()
         os.chdir(self.target_dir)
+
     def __exit__(self, *args):
         os.chdir(self.root_dir)
 
@@ -61,6 +64,7 @@ class StringList(list):
     and provides tab completion.
 
     """
+
     def __init__(self, list_or_str):
         try:
             inlist = list_or_str.split()
@@ -72,7 +76,7 @@ class StringList(list):
     @property
     def as_string(self):
         """return concatenation with spaces between"""
-        return ' ' + ' '.join(self) + ' '
+        return " " + " ".join(self) + " "
 
 
 class InfolderGoneWithTheWind:
@@ -93,28 +97,29 @@ class InfolderGoneWithTheWind:
     >>> assert len(os.listdir('.')) == len_
 
     """
-    def __init__(self, prefix='_'):
+
+    def __init__(self, prefix="_"):
         """no folder needs to be given"""
         self.prefix = prefix
+
     def __enter__(self):
         self.root_dir = os.getcwd()
         # self.target_dir = tempfile.mkdtemp(prefix=self.prefix, dir='.')
         self.target_dir = tempfile.mkdtemp(prefix=self.prefix)
         self._target_dir = self.target_dir
         os.chdir(self.target_dir)
+
     def __exit__(self, *args):
         os.chdir(self.root_dir)
         if self.target_dir == self._target_dir:
             shutil.rmtree(self.target_dir)
         else:
-            raise ValueError("inconsistent temporary folder name %s vs %s"
-                             % (self._target_dir, self.target_dir))
+            raise ValueError("inconsistent temporary folder name %s vs %s" % (self._target_dir, self.target_dir))
 
 
 class StrList(list):
-    """A list of `str` with search/find functionality.
+    """A list of `str` with search/find functionality."""
 
-    """
     def __init__(self, list_or_str):
         try:
             inlist = list_or_str.split()
@@ -127,16 +132,15 @@ class StrList(list):
     @property
     def as_string(self):
         """return space separated string concatenation surrounded by spaces.
-        
+
         To get only the recently found items use ``found.as_string``
         instead of ``as_string``.
         """
-        return ' ' + ' '.join(self) + ' '
+        return " " + " ".join(self) + " "
 
     @property
     def found(self):
-        """`StrList` of elements found during the last call to `find`.
-        """
+        """`StrList` of elements found during the last call to `find`."""
         return StrList(self._names_found)
 
     def __call__(self, *substrs):
@@ -197,13 +201,12 @@ class StrList(list):
             for ss in leading_strs:
                 for i in range(len(ss)):
                     if s.startswith(ss[i:]):
-                        s = s[len(ss[i:]):]  # remove leading part
+                        s = s[len(ss[i:]) :]  # remove leading part
             rex = _re.compile(s, _re.IGNORECASE)
             try:
                 names = [name for name in names if rex.match(name) or s.lower() in name.lower()]
             except AttributeError:
-                warnings.warn("arguments to `find` must be strings or a "
-                              "single integer or an integer list")
+                warnings.warn("arguments to `find` must be strings or a single integer or an integer list")
                 raise
         self._names_found = names
         return StrList(names)
@@ -239,15 +242,16 @@ class AlgorithmList(list):
     ...     assert name == l[i]
 
     """
+
     def ordered_dict(self, algorithms_dict):
         """return algorithms_dict as `OrderedDict` in order of self.
 
         Keys that are not in self are sorted using `sorted`.
         """
         if set(algorithms_dict) != set(self):
-            warnings.warn("keys in algorithm dict: \n%s\n"
-                          "do not agree with original algorithm list: \n%s\n"
-                                 % (str(algorithms_dict.keys()), str(self)))
+            warnings.warn(
+                "keys in algorithm dict: \n%s\ndo not agree with original algorithm list: \n%s\n" % (str(algorithms_dict.keys()), str(self))
+            )
         res = _OrderedDict()
         for name in self:
             if name in algorithms_dict:
@@ -259,24 +263,27 @@ class AlgorithmList(list):
         return res
 
 
-def print_done(message='  done'):
+def print_done(message="  done"):
     """prints a message with time stamp"""
-    print(message, '(' + time.asctime() + ').')
+    print(message, "(" + time.asctime() + ").")
+
 
 def equals_approximately(a, b, eps=1e-12):
     if a < 0:
         a, b = -1 * a, -1 * b
     return a - eps < b < a + eps or (1 - eps) * a < b < (1 + eps) * a
 
+
 def less(a, b):
     """return a < b, while comparing nan results in False without warning"""
     current_err_setting = np.geterr()
-    np.seterr(invalid='ignore')
+    np.seterr(invalid="ignore")
     res = a < b
     np.seterr(**current_err_setting)
     return res
 
-def diff_attr(m1, m2, exclude=('_', )):
+
+def diff_attr(m1, m2, exclude=("_",)):
     """return `list` of ``[name, val1, val2]`` triplets for
     attributes with different values.
 
@@ -288,106 +295,139 @@ def diff_attr(m1, m2, exclude=('_', )):
     module with its state directly after import. It should be
     applicable any other two class instances as well.
 
-    Details: to "find" the attributes, `m1.__dict__` is iterated over. 
+    Details: to "find" the attributes, `m1.__dict__` is iterated over.
     """
-    return [[key, getattr(m1, key), getattr(m2, key)]
-            for key in m1.__dict__
-                if hasattr(m2, key) and
-                    not any(key.startswith(s) for s in exclude)
-                    and np.all(getattr(m1, key) != getattr(m2, key))]
+    return [
+        [key, getattr(m1, key), getattr(m2, key)]
+        for key in m1.__dict__
+        if hasattr(m2, key) and not any(key.startswith(s) for s in exclude) and np.all(getattr(m1, key) != getattr(m2, key))
+    ]
+
 
 def prepend_to_file(filename, lines, maxlines=1000, warn_message=None):
-    """"prepend lines the tex-command filename """
+    """ "prepend lines the tex-command filename"""
     try:
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             lines_to_append = list(f)
     except IOError:
         lines_to_append = []
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         for line in lines:
-            f.write(line + '\n')
+            f.write(line + "\n")
         for i, line in enumerate(lines_to_append):
             f.write(line)
             if i > maxlines:
                 print(warn_message)
                 break
-        
-def replace_in_file(filename, old_text, new_text):
-    """"replace a string in the file with another string"""
 
-    lines = []    
+
+def replace_in_file(filename, old_text, new_text):
+    """ "replace a string in the file with another string"""
+
+    lines = []
     try:
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             lines = list(f)
     except IOError:
-        print('File %s does not exist.' % filename)
-    
-    if lines:    
-        with open(filename, 'w') as f:
+        print("File %s does not exist." % filename)
+
+    if lines:
+        with open(filename, "w") as f:
             for line in lines:
                 f.write(line.replace(old_text, new_text))
-        
+
+
 def truncate_latex_command_file(filename, keeplines=200):
     """truncate file but keep in good latex shape"""
-    open(filename, 'a').close()
-    with open(filename, 'r') as f:
+    open(filename, "a").close()
+    with open(filename, "r") as f:
         lines = list(f)
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         for i, line in enumerate(lines):
-            if i > keeplines and line.startswith(r'\providecommand'):
+            if i > keeplines and line.startswith(r"\providecommand"):
                 break
             f.write(line)
-    
+
+
 def strip_pathname(name):
     """remove ../ and ./ and leading/trailing blanks and path separators
     from input string ``name`` and replace any remaining path separator
     with '/'"""
-    return name.replace('..' + os.sep, '').replace('.' + os.sep, '').strip().strip(os.sep).replace(os.sep, '/')
+    return name.replace(".." + os.sep, "").replace("." + os.sep, "").strip().strip(os.sep).replace(os.sep, "/")
+
 
 def strip_pathname1(name):
     """remove ../ and ./ and leading/trailing blanks and path separators
     from input string ``name``, replace any remaining path separator
     with '/', and keep only the last part of the path"""
-    return (name.replace('..' + os.sep, '').replace('.' + os.sep, '').strip().strip(os.sep).split(os.sep)[-1]).replace('data', '').replace('Data', '').replace('DATA', '').replace('.tar.gz', '').replace('.tgz', '').replace('.tar', '').replace(genericsettings.extraction_folder_prefix, '').strip(os.sep).replace(os.sep, '/')
+    return (
+        (name.replace(".." + os.sep, "").replace("." + os.sep, "").strip().strip(os.sep).split(os.sep)[-1])
+        .replace("data", "")
+        .replace("Data", "")
+        .replace("DATA", "")
+        .replace(".tar.gz", "")
+        .replace(".tgz", "")
+        .replace(".tar", "")
+        .replace(genericsettings.extraction_folder_prefix, "")
+        .strip(os.sep)
+        .replace(os.sep, "/")
+    )
+
 
 def strip_pathname2(name):
     """as `strip_pathname1` but keep the last two parts of the path"""
-    return os.sep.join(name.replace('..' + os.sep, '').replace('.' + os.sep, '').strip().strip(os.sep).split(os.sep)[-2:]).replace('data', '').replace('Data', '').replace('DATA', '').replace('.tar.gz', '').replace('.tgz', '').replace('.tar', '').strip(os.sep).replace(os.sep, '/')
+    return (
+        os.sep.join(name.replace(".." + os.sep, "").replace("." + os.sep, "").strip().strip(os.sep).split(os.sep)[-2:])
+        .replace("data", "")
+        .replace("Data", "")
+        .replace("DATA", "")
+        .replace(".tar.gz", "")
+        .replace(".tgz", "")
+        .replace(".tar", "")
+        .strip(os.sep)
+        .replace(os.sep, "/")
+    )
+
 
 def strip_pathname3(name):
     """as `strip_pathname1` and also remove `'noiseless'` from the name"""
-    return strip_pathname1(name).replace('noiseless', '')
+    return strip_pathname1(name).replace("noiseless", "")
+
 
 def str_to_latex(string):
-    """do replacements in ``string`` such that it most likely compiles with latex """
-    #return string.replace('\\', r'\textbackslash{}').replace('_', '\\_').replace(r'^', r'\^\,').replace(r'%', r'\%').replace(r'~', r'\ensuremath{\sim}').replace(r'#', r'\#')
-    return string.replace('\\', r'\textbackslash{}').replace('_', ' ').replace(r'^', r'\^\,').replace(r'%', r'\%').replace(r'~', r'\ensuremath{\sim}').replace(r'#', r'\#')
+    """do replacements in ``string`` such that it most likely compiles with latex"""
+    # return string.replace('\\', r'\textbackslash{}').replace('_', '\\_').replace(r'^', r'\^\,').replace(r'%', r'\%').replace(r'~', r'\ensuremath{\sim}').replace(r'#', r'\#')
+    return (
+        string.replace("\\", r"\textbackslash{}")
+        .replace("_", " ")
+        .replace(r"^", r"\^\,")
+        .replace(r"%", r"\%")
+        .replace(r"~", r"\ensuremath{\sim}")
+        .replace(r"#", r"\#")
+    )
 
 
 def number_of_digits(val, precision=1e-13):
-    """returns the number of non-zero digits of a number, e.g. two for 1200 or three for 2.03.
-    
-    """  
+    """returns the number of non-zero digits of a number, e.g. two for 1200 or three for 2.03."""
     raise NotImplementedError()
 
-def num2str(val, significant_digits=2, force_rounding=False, 
-            max_predecimal_digits=5, max_postdecimal_leading_zeros=1, 
-            remove_trailing_zeros=True):
-    """returns the shortest string representation with either ``significant_digits`` 
+
+def num2str(val, significant_digits=2, force_rounding=False, max_predecimal_digits=5, max_postdecimal_leading_zeros=1, remove_trailing_zeros=True):
+    """returns the shortest string representation with either ``significant_digits``
     digits shown or its true value, whichever is shorter.
-    
-    ``force_rounding`` shows no more than the desired number of significant digits, 
-    which means, e.g., ``12345``  becomes ``12000``. 
-    
-    ``remove_trailing_zeros`` removes zeros, if and only if the value is exactly. 
-     
+
+    ``force_rounding`` shows no more than the desired number of significant digits,
+    which means, e.g., ``12345``  becomes ``12000``.
+
+    ``remove_trailing_zeros`` removes zeros, if and only if the value is exactly.
+
     >>> from cocopp import toolsdivers as td
     >>> print([td.num2str(val) for val in [12345, 1234.5, 123.45, 12.345, 1.2345, .12345, .012345, .0012345]])
     ['12345', '1234', '123', '12', '1.2', '0.12', '0.012', '1.2e-3']
-    
+
     """
     if val == 0:
-        return '0'
+        return "0"
     assert significant_digits > 0
     is_negative = val < 0
     # original_value = val
@@ -395,95 +435,101 @@ def num2str(val, significant_digits=2, force_rounding=False,
 
     order_of_magnitude = int(np.floor(np.log10(val)))
     # number of digits before decimal point == order_of_magnitude + 1
-    fac = 10**(significant_digits - 1 - order_of_magnitude)
+    fac = 10 ** (significant_digits - 1 - order_of_magnitude)
     val_rounded = np.round(fac * val) / fac
 
-    # the strategy is now to produce two string representations 
-    # cut each down to the necessary length and return the better 
-    
+    # the strategy is now to produce two string representations
+    # cut each down to the necessary length and return the better
+
     # the first is %f format
     if order_of_magnitude + 1 >= significant_digits:
         s = str(int(val_rounded if force_rounding else np.round(val)))
     else:
         s = str(val_rounded)
         idx1 = 0  # first non-zero index
-        while idx1 < len(s) and s[idx1] in ('-', '0', '.'):
+        while idx1 < len(s) and s[idx1] in ("-", "0", "."):
             idx1 += 1  # find index of first significant number
-        idx2 = idx1 + significant_digits + (s.find('.') > idx1)
+        idx2 = idx1 + significant_digits + (s.find(".") > idx1)
         # print(val, val_rounded, s, len(s), idx1, idx2)
         # pad some zeros in the end, in case
         if val != val_rounded:
             if len(s) < idx2:
-                s += '0' * (idx2 - len(s))
+                s += "0" * (idx2 - len(s))
         # remove zeros from the end, in case
         if val == val_rounded and remove_trailing_zeros:
-            while s[-1] == '0': 
+            while s[-1] == "0":
                 s = s[0:-1]
-        if s[-1] == '.':
+        if s[-1] == ".":
             s = s[0:-1]
-    s_float = ('-' if is_negative else '') + s
+    s_float = ("-" if is_negative else "") + s
 
     # now the second, %e format
-    s = ('%.' + str(significant_digits - 1) + 'e') % val
-    if eval(s) == val and s.find('.') > 0:
-        while s.find('0e') > 0:
-            s = s.replace('0e', 'e')
-    s = s.replace('.e', 'e')
-    s = s.replace('e+', 'e')
-    while s.find('e0') > 0:
-        s = s.replace('e0', 'e')
-    while s.find('e-0') > 0:
-        s = s.replace('e-0', 'e-')
-    if s[-1] == 'e':
+    s = ("%." + str(significant_digits - 1) + "e") % val
+    if eval(s) == val and s.find(".") > 0:
+        while s.find("0e") > 0:
+            s = s.replace("0e", "e")
+    s = s.replace(".e", "e")
+    s = s.replace("e+", "e")
+    while s.find("e0") > 0:
+        s = s.replace("e0", "e")
+    while s.find("e-0") > 0:
+        s = s.replace("e-0", "e-")
+    if s[-1] == "e":
         s = s[:-1]
-    s_exp = ('-' if is_negative else '') + s 
-    
+    s_exp = ("-" if is_negative else "") + s
+
     # print(s_float, s_exp)
-    
+
     # now return the better (most of the time the shorter) representation
-    if (len(s_exp) < len(s_float) or 
-        s_float.find('0.' + '0' * (max_postdecimal_leading_zeros + 1)) > -1 or
-        np.abs(val_rounded) >= 10**(max_predecimal_digits + 1)
-        ):
+    if (
+        len(s_exp) < len(s_float)
+        or s_float.find("0." + "0" * (max_postdecimal_leading_zeros + 1)) > -1
+        or np.abs(val_rounded) >= 10 ** (max_predecimal_digits + 1)
+    ):
         return s_exp
     else:
         return s_float
 
+
 def number_to_latex(number_as_string):
     """usage as ``number_to_latex(num2str(1.023e-12)) == "'-1.0\\times10^{-12}'"``"""
     s = number_as_string
-    if s.find('e') > 0:
-        if s.startswith('1e') or s.startswith('-1e'):
-            s = s.replace('1e', '10^{')
+    if s.find("e") > 0:
+        if s.startswith("1e") or s.startswith("-1e"):
+            s = s.replace("1e", "10^{")
         else:
-            s = s.replace('e', '\\times10^{')
-        s += '}'
+            s = s.replace("e", "\\times10^{")
+        s += "}"
     return s
+
 
 def number_to_html(number_as_string):
     """usage as ``number_to_html(num2str(1.023e-12)) == "'-1.0 x 10<sup>-12</sup>'"``"""
     s = number_as_string
-    if s.find('e') > 0:
-        if s.startswith('1e') or s.startswith('-1e'):
-            s = s.replace('1e', '10<sup>')
+    if s.find("e") > 0:
+        if s.startswith("1e") or s.startswith("-1e"):
+            s = s.replace("1e", "10<sup>")
         else:
-            s = s.replace('e', ' x 10<sup>')
-        s += '</sup>'
+            s = s.replace("e", " x 10<sup>")
+        s += "</sup>"
     return s
 
+
 def legend(*args, **kwargs):
-   kwargs.setdefault('framealpha', 0.2)
-   try:
-      plt.legend(*args, **kwargs)
-   except:
-      warnings.warn("framealpha not effective")
-      kwargs.pop('framealpha')
-      plt.legend(*args, **kwargs)
-      
+    kwargs.setdefault("framealpha", 0.2)
+    try:
+        plt.legend(*args, **kwargs)
+    except:
+        warnings.warn("framealpha not effective")
+        kwargs.pop("framealpha")
+        plt.legend(*args, **kwargs)
+
+
 try:
     from subprocess import check_output
 except ImportError:
     import subprocess
+
     def check_output(*popenargs, **kwargs):
         r"""Run command with arguments and return its output as a byte string.
         Backported from Python 2.7 as it's implemented as pure python on stdlib.
@@ -503,6 +549,7 @@ except ImportError:
             raise error
         return output
 
+
 def git(args):
     """Run a git command and return its output.
 
@@ -511,42 +558,42 @@ def git(args):
     WARNING: This method is also defined in ../../code-experiments/tools/cocoutils.py.
     If you change something you have to change it in both files.
     """
-    full_command = ['git']
+    full_command = ["git"]
     full_command.extend(args)
     try:
-        output = check_output(full_command, env=os.environ,
-                              stderr=STDOUT, universal_newlines=True)
+        output = check_output(full_command, env=os.environ, stderr=STDOUT, universal_newlines=True)
         output = output.rstrip()
     except CalledProcessError as e:
         print('Failed to execute "{0}" with exception {1}'.format(full_command, e))
         raise
     return output
 
+
 def get_version_label(algorithmID=None):
-    """ Returns a string with the COCO version of the installed postprocessing,
-        potentially adding the hash of the hypervolume reference values from
-        the actual experiments (in the `bbob-biobj` setting).
-        If algorithmID==None, the set of different hypervolume reference values
-        from all algorithms, read in by the postprocessing, are returned in
-        the string. If more than one reference value is present in the data,
-        the string displays also a warning.
+    """Returns a string with the COCO version of the installed postprocessing,
+    potentially adding the hash of the hypervolume reference values from
+    the actual experiments (in the `bbob-biobj` setting).
+    If algorithmID==None, the set of different hypervolume reference values
+    from all algorithms, read in by the postprocessing, are returned in
+    the string. If more than one reference value is present in the data,
+    the string displays also a warning.
     """
     from ._version import __version__ as coco_version
+
     reference_values = testbedsettings.get_reference_values(algorithmID)
-    
+
     if reference_values and isinstance(reference_values, set):
         label = "v%s, hv-hashes inconsistent:" % (coco_version)
         for r in reference_values:
             label = label + " %s and" % (r)
         label = label[:-3] + "found!"
     else:
-        label = "v%s" % (coco_version) if reference_values is None else "v%s, hv-hash=%s" % (coco_version, reference_values)      
+        label = "v%s" % (coco_version) if reference_values is None else "v%s, hv-hash=%s" % (coco_version, reference_values)
     return label
 
 
 def path_in_package(sub_path=""):
-    """return the absolute path prepended to `subpath` in this module.
-    """
+    """return the absolute path prepended to `subpath` in this module."""
     try:
         import importlib_resources as res
     except ImportError:

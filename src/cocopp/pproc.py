@@ -15,7 +15,7 @@ for comparisons.
 """
 
 # TODO: dictAlg should become the class DictALg that is a dictionary of DataSetLists with
-# usecase DictAlg(algdict).by_dim() etc  
+# usecase DictAlg(algdict).by_dim() etc
 
 from __future__ import absolute_import, print_function
 
@@ -41,21 +41,22 @@ from .readalign import HArrayMultiReader, VArrayMultiReader, alignArrayData
 from .ppfig import consecutiveNumbers, Usage
 from . import archiving
 
-do_assertion = genericsettings.force_assertions # expensive assertions
-targets_displayed_for_info = [10, 1., 1e-1, 1e-3, 1e-5, 1e-8]  # only to display info in DataSetList.info
+do_assertion = genericsettings.force_assertions  # expensive assertions
+targets_displayed_for_info = [10, 1.0, 1e-1, 1e-3, 1e-5, 1e-8]  # only to display info in DataSetList.info
 maximal_evaluations_only_to_last_target = False  # was true in release 13.03, leads naturally to better results
 
 _block_using_recommendations = True
-'''meta flag to control setting and changing of _using_recommendations.
+"""meta flag to control setting and changing of _using_recommendations.
 
     `rungenericmany.main` unblocks `_using_recommendations` before calling
     `processInputArgs`. The latter sets `_block_using_recommendations` to
     `True` after calling `process_arguments` once and background algorithms
     are then processed without recommendations and `_using_recommendations`
     is blocked to `False` as postcondition.
-    '''
+    """
 _using_recommendations = None
-'''`bool` to determine which data are used in the `DataSet` constructor'''
+"""`bool` to determine which data are used in the `DataSet` constructor"""
+
 
 def _set_using_recommendations(index):
     """set module variable `_using_recommendations`
@@ -77,6 +78,7 @@ def _set_using_recommendations(index):
             _using_recommendations = genericsettings.use_recommendations[-1]
     return previous_value
 
+
 def _DataSet_complement_data(self, step=10**0.2, final_target=1e-8):
     """insert a line for each target value, never used (detEvals(targets) does the job on the fly).
 
@@ -90,13 +92,13 @@ def _DataSet_complement_data(self, step=10**0.2, final_target=1e-8):
     except AttributeError:
         pass
     if step < 1:
-        step = 1. / step
+        step = 1.0 / step
     assert step > 1
-    
+
     # check that step splits 10 into uniform intervals on the log scale
     if np.abs(0.2 / np.log10(step) - np.round(0.2 / np.log10(step))) > 1e-11:
         print(np.log10(step))
-        raise NotImplementedError('0.2 / log10(step) must be an integer to be compatible with previous data')
+        raise NotImplementedError("0.2 / log10(step) must be an integer to be compatible with previous data")
 
     i = 0
     newdat = []
@@ -106,29 +108,33 @@ def _DataSet_complement_data(self, step=10**0.2, final_target=1e-8):
     for i in range(len(self._evals) - 1):
         newdat.append(self._evals[i])
         target = self._evals[i][0] / step
-        while target >= final_target and target > self._evals[i+1][0] and target / self._evals[i+1][0] - 1 > 1e-9:
-            newdat.append(self._evals[i+1])
+        while target >= final_target and target > self._evals[i + 1][0] and target / self._evals[i + 1][0] - 1 > 1e-9:
+            newdat.append(self._evals[i + 1])
             newdat[-1][0] = target
             target /= step
     newdat.append(self._evals[-1])
-    
+
     # raise NotImplementedError('needs yet to be re-checked, tested, approved')  # check newdat and self.evals
     self._evals = np.array(newdat)  # for portfolios, self.evals is not an array
     assert np.max(np.abs(self._evals[:-1, 0] / self._evals[1:, 0] - 10**step)) < 1e-11
     assert nb_columns == self._evals.shape[1], (nb_columns, self._evals.shape[1])
-    self._is_complemented_data = True # TODO: will remain true forever, this needs to be set to False again somewhere? 
+    self._is_complemented_data = True  # TODO: will remain true forever, this needs to be set to False again somewhere?
+
 
 def cocofy(filename):
     """Replaces cocopp references in pickles files with coco_pproc
-        This could become necessary for future backwards compatibility,
-        however rather should become a class method. """
+    This could become necessary for future backwards compatibility,
+    however rather should become a class method."""
     import fileinput
+
     for line in fileinput.input(filename, inplace=1):
-#       if "bbob" in line:
-        sys.stdout.write(line.replace("bbob_pproc","cocopp"))
+        #       if "bbob" in line:
+        sys.stdout.write(line.replace("bbob_pproc", "cocopp"))
     fileinput.close()
 
+
 # CLASS DEFINITIONS
+
 
 def asTargetValues(target_values):
     if isinstance(target_values, TargetValues):
@@ -139,8 +145,9 @@ def asTargetValues(target_values):
         isinstance(target_values((1, 20)), list)
         return target_values
     except:
-        raise NotImplementedError("""type %s not recognized""" %
-                                  str(type(target_values)))
+        raise NotImplementedError("""type %s not recognized""" % str(type(target_values)))
+
+
 class TargetValues(object):
     """store and retrieve a list of target function values:
 
@@ -149,20 +156,21 @@ class TargetValues(object):
         >>> targets = [10**i for i in np.arange(2, -8.1, -0.2)]
         >>> targets_as_class = pp.TargetValues(targets)
         >>> assert targets_as_class() == targets
-    
+
     In itself this class is useless, as it does not more than a simple list
     could do, but it serves as interface for derived classes, where ``targets()``
-    requires an actual argument ``targets(fun_dim)``. 
-    
-    Details: The optional argument for calling the class instance is needed to 
-    be consistent with the derived ``class RunlengthBasedTargetValues``. 
-    
+    requires an actual argument ``targets(fun_dim)``.
+
+    Details: The optional argument for calling the class instance is needed to
+    be consistent with the derived ``class RunlengthBasedTargetValues``.
+
     """
+
     def __init__(self, target_values, discretize=None):
         if 11 < 3 and isinstance(target_values, TargetValues):  # type cast passing behavior
             return self  # caveat: one might think a copy should be made
             self.__dict__ = target_values.__dict__  # this is not a copy
-            return  
+            return
         self.target_values = sorted(target_values, reverse=True)
         if discretize:
             self.target_values = self._discretize(self.target_values)
@@ -175,10 +183,10 @@ class TargetValues(object):
     @staticmethod
     def cast(target_values_or_class_instance, *args, **kwargs):
         """idempotent cast to ``TargetValues`` class type, specifically
-        ``return TargetValues(target_values_or_class_instance) 
-            if not isinstance(target_values_or_class_instance, TargetValues) 
-            else target_values_or_class_instance`` 
-            
+        ``return TargetValues(target_values_or_class_instance)
+            if not isinstance(target_values_or_class_instance, TargetValues)
+            else target_values_or_class_instance``
+
         """
         if isinstance(target_values_or_class_instance, TargetValues):
             return target_values_or_class_instance
@@ -192,14 +200,14 @@ class TargetValues(object):
         if discretize:
             return self._discretize(self.target_values)
         return self.target_values
+
     @staticmethod
     def _discretize(target_list):
-        """return a "similar" list with targets in [10**i/5]
-        """
+        """return a "similar" list with targets in [10**i/5]"""
         number_per_magnitude = 5  # will become input arg if needed
         factor = float(number_per_magnitude)
-        return [10**(np.round(factor * np.log10(t)) / factor)
-                for t in target_list]
+        return [10 ** (np.round(factor * np.log10(t)) / factor) for t in target_list]
+
     def label(self, i):
         """return the ``i``-th target value as ``str``, to be overwritten by a derived class"""
         return toolsdivers.num2str(self.target_values[i], significant_digits=2)
@@ -207,7 +215,7 @@ class TargetValues(object):
     def loglabel(self, i, decimals=0):
         """return ``log10`` of the ``i``-th target value as ``str``, to be overwritten by a derived class"""
         # return str(int(np.round(np.log10(self.target_values[i]), decimals)))
-        return toolsdivers.num2str(np.log10(self.target_values[i]), significant_digits=decimals+1)
+        return toolsdivers.num2str(np.log10(self.target_values[i]), significant_digits=decimals + 1)
 
     def labels(self):
         """target values as a list of ``str``"""
@@ -218,7 +226,7 @@ class TargetValues(object):
                 i += 1
         except IndexError:
             return res
- 
+
     def loglabels(self, decimals=0):
         """``log10`` of the target values as a list of ``str``"""
         i, res = 0, []
@@ -230,12 +238,13 @@ class TargetValues(object):
             return res
 
     def label_name(self):
-        return 'Df'
+        return "Df"
+
 
 class RunlengthBasedTargetValues(TargetValues):
-    """a class instance call returns f-target values based on 
+    """a class instance call returns f-target values based on
     reference runlengths:
-    
+
         >>> import cocopp
         >>> # make sure to use the right `bbob` test suite for the test below:
         >>> cocopp.genericsettings.isNoisy = False
@@ -249,19 +258,20 @@ class RunlengthBasedTargetValues(TargetValues):
         Loading best algorithm data from ...
         >>> assert 6.30957345e+01 <= t[0] <= 6.30957346e+01
         >>> assert t[-1] == 1.00000000e-08
-             
-    returns a list of target f-values for F1 in 20-D, based on the 
+
+    returns a list of target f-values for F1 in 20-D, based on the
     ERT values ``[0.5,...,50]``.
-        
-    Details: The computation starts from the smallest budget and the resulting f-target 
-    must always be at least a factor of ``force_different_targets_factor`` smaller 
+
+    Details: The computation starts from the smallest budget and the resulting f-target
+    must always be at least a factor of ``force_different_targets_factor`` smaller
     than the previous one. If the ``smallest_target`` is superseded, the log values
-    are linearly rescaled such that the easiest found target remains the same and 
-    the smallest target becomes ``smallest_target``. 
-    
+    are linearly rescaled such that the easiest found target remains the same and
+    the smallest target becomes ``smallest_target``.
+
     TODO: see compall/determineFtarget2.FunTarget
-    
+
     """
+
     @staticmethod
     def cast(run_lengths_or_class_instance, *args, **kwargs):
         """idempotent cast to ``RunlengthBasedTargetValues`` class type"""
@@ -269,18 +279,23 @@ class RunlengthBasedTargetValues(TargetValues):
             return run_lengths_or_class_instance
         else:
             return RunlengthBasedTargetValues(run_lengths_or_class_instance, *args, **kwargs)
-        
-    def __init__(self, run_lengths, reference_data='testbedsettings',
-                 smallest_target=1e-8, times_dimension=True, 
-                 force_different_targets_factor=10**0.04,
-                 unique_target_values=False,
-                 step_to_next_difficult_target=10**0.2):
+
+    def __init__(
+        self,
+        run_lengths,
+        reference_data="testbedsettings",
+        smallest_target=1e-8,
+        times_dimension=True,
+        force_different_targets_factor=10**0.04,
+        unique_target_values=False,
+        step_to_next_difficult_target=10**0.2,
+    ):
         """calling the class instance returns run-length based
         target values based on the reference data, individually
-        computed for a given ``(funcId, dimension)``. 
-        
-        :param run_lengths: sequence of values. 
-        :param reference_data: 
+        computed for a given ``(funcId, dimension)``.
+
+        :param run_lengths: sequence of values.
+        :param reference_data:
             can be a string indicating the filename of a reference algorithm
             data set such as ``"refalgs/best2009-bbob.tar.gz"`` or a dictionary
             of best data sets (e.g. from ``bestalg.generate(...)``)
@@ -290,11 +305,11 @@ class RunlengthBasedTargetValues(TargetValues):
         :param smallest_target:
         :param times_dimension:
         :param force_different_targets_factor:
-            given the target values are computed from the 
+            given the target values are computed from the
             ``reference_data``, enforces that all target
             values are different by at last ``forced_different_targets_factor``
-            if ``forced_different_targets_factor``. Default ``10**0.04`` means 
-            that within the typical precision of ``10**0.2`` at most five 
+            if ``forced_different_targets_factor``. Default ``10**0.04`` means
+            that within the typical precision of ``10**0.2`` at most five
             consecutive targets can be identical.
         :param step_to_next_difficult_target:
             the next more difficult target (just) not reached within the
@@ -312,32 +327,33 @@ class RunlengthBasedTargetValues(TargetValues):
         """
         self.reference_data = reference_data
         if force_different_targets_factor < 1:
-            force_different_targets_factor **= -1 
+            force_different_targets_factor **= -1
         self._short_info = "budget-based targets"
         self.run_lengths = sorted(run_lengths)
         self.smallest_target = smallest_target
-        self.step_to_next_difficult_target = step_to_next_difficult_target**np.sign(np.log(step_to_next_difficult_target))
+        self.step_to_next_difficult_target = step_to_next_difficult_target ** np.sign(np.log(step_to_next_difficult_target))
         self.times_dimension = times_dimension
         self.unique_target_values = unique_target_values
-        # force_different_targets and target_discretization could talk to each other? 
+        # force_different_targets and target_discretization could talk to each other?
         self.force_different_targets_factor = force_different_targets_factor
         self.target_discretization_factor = 10**0.2  # in accordance with default recordings
-        self.reference_algorithm = ''
+        self.reference_algorithm = ""
         self.initialized = False
 
     def initialize(self):
         """lazy initialization to prevent slow import"""
         if self.initialized:
             return self
-        if self.reference_data == 'testbedsettings': # refalg data are loaded according to testbedsettings
+        if self.reference_data == "testbedsettings":  # refalg data are loaded according to testbedsettings
             self.reference_algorithm = testbedsettings.current_testbed.reference_algorithm_filename
-            self._short_info = 'reference budgets from ' + self.reference_algorithm
+            self._short_info = "reference budgets from " + self.reference_algorithm
 
             from . import bestalg
+
             self.reference_data = bestalg.load_reference_algorithm(self.reference_algorithm, force=True)
             # TODO: remove targets smaller than 1e-8
         elif isinstance(self.reference_data, string_types):  # self.reference_data in ('RANDOMSEARCH', 'IPOP-CMA-ES') should work
-            self._short_info = 'reference budgets from ' + self.reference_data
+            self._short_info = "reference budgets from " + self.reference_data
             # dsl = DataSetList(os.path.join(sys.modules[globals()['__name__']].__file__.split('cocopp')[0],
             #                                'cocopp', 'data', self.reference_data))
             dsl = DataSetList(archiving.official_archives.all.get(self.reference_data))
@@ -348,8 +364,10 @@ class RunlengthBasedTargetValues(TargetValues):
             self.reference_data = dsd
         elif isinstance(self.reference_data, list):
             if not isinstance(self.reference_data[0], string_types):
-                raise ValueError("RunlengthBasedTargetValues() expected a string, dict, or list of strings as second argument,"
-                + (" got a list of %s" % str(type(self.reference_data[0]))))
+                raise ValueError(
+                    "RunlengthBasedTargetValues() expected a string, dict, or list of strings as second argument,"
+                    + (" got a list of %s" % str(type(self.reference_data[0])))
+                )
             # dsList, sortedAlgs, dictAlg = processInputArgs(self.reference_data)
             self.reference_data = processInputArgs(self.reference_data)[2]
             self.reference_algorithm = self.reference_data[list(self.reference_data.keys())[0]].algId
@@ -362,94 +380,99 @@ class RunlengthBasedTargetValues(TargetValues):
         return self
 
     def __len__(self):
-        return len(self.run_lengths)  
+        return len(self.run_lengths)
 
     def __call__(self, fun_dim=None, discretize=None):
-        """Get all target values for the respective function and dimension  
+        """Get all target values for the respective function and dimension
         and reference ERT values (passed during initialization). `fun_dim`
         is a tuple ``(fun_nb, dimension)`` like ``(1, 20)`` for the 20-D
         sphere.
 
         ``if discretize`` all targets are in [10**i/5 for i in N], in case
         achieved via rounding on the log-scale.
-        
-        Details: f_target = arg min_f { ERT_ref(f) > max(1, target_budget * dimension**times_dimension_flag) }, 
+
+        Details: f_target = arg min_f { ERT_ref(f) > max(1, target_budget * dimension**times_dimension_flag) },
         where f are the values of the ``DataSet`` ``target`` attribute. The next difficult target is chosen
-        not smaller as target / 10**0.2. 
-        
+        not smaller as target / 10**0.2.
+
         Returned are the ERT for targets that, within the given budget, the
         reference algorithm just failed to achieve.
 
-        """            
+        """
         self.initialize()
-        if self.force_different_targets_factor**len(self.run_lengths) > 1e3:
-                warnings.warn('enforced different target values might spread more than three orders of magnitude')
+        if self.force_different_targets_factor ** len(self.run_lengths) > 1e3:
+            warnings.warn("enforced different target values might spread more than three orders of magnitude")
         if fun_dim is None:
-            raise ValueError('call to RunlengthbasedTargetValues class instance needs the parameter ``fun_dim``, none given')
+            raise ValueError("call to RunlengthbasedTargetValues class instance needs the parameter ``fun_dim``, none given")
         fun_dim = tuple(fun_dim)
         dim_fun = tuple(reversed(fun_dim))
-        if fun_dim[0] > 100 and self.run_lengths[-1] * fun_dim[1]**self.times_dimension < 1e3:
+        if fun_dim[0] > 100 and self.run_lengths[-1] * fun_dim[1] ** self.times_dimension < 1e3:
             ValueError("short running times don't work on noisy functions")
 
         if not self.reference_data:
-            raise ValueError('When running with the runlegth based target values ' \
-                              'the reference data (e.g. a best algorithm) must exist.')
+            raise ValueError("When running with the runlegth based target values the reference data (e.g. a best algorithm) must exist.")
 
         ds = self.reference_data[dim_fun]
-        if 11 < 3:   
+        if 11 < 3:
             try:
-                ds._complement_data() # is not fully implemented and not here not necessary
-            except AttributeError: # loaded classes might not have this method
+                ds._complement_data()  # is not fully implemented and not here not necessary
+            except AttributeError:  # loaded classes might not have this method
                 # need a hack here
                 _DataSet_complement_data(ds, self.target_discretization_factor)
         # end is the first index in ds.target with a values smaller than smallest_target
         try:
-            end = np.nonzero(ds.target >= self.smallest_target)[0][-1] + 1 
-            # same as end = np.where(ds.target >= smallest_target)[0][-1] + 1 
+            end = np.nonzero(ds.target >= self.smallest_target)[0][-1] + 1
+            # same as end = np.where(ds.target >= smallest_target)[0][-1] + 1
         except IndexError:
             end = len(ds.target)
 
         if genericsettings.test:
-            if 11 < 3 and not toolsdivers.equals_approximately(ds.target[end-2] / ds.target[end-1], 10**0.2, 1e-8):
-                print('last two targets before index %s' % str(end))
-                print(ds.target[end-2:end])
-            try: 
+            if 11 < 3 and not toolsdivers.equals_approximately(ds.target[end - 2] / ds.target[end - 1], 10**0.2, 1e-8):
+                print("last two targets before index %s" % str(end))
+                print(ds.target[end - 2 : end])
+            try:
                 assert ds.ert[0] == 1  # we might have to compute these the first time
             except AssertionError:
-                print(fun_dim, ds.ert[0], 'ert[0] != 1 in TargetValues.__call__')
-            try: 
-                # check whether there are gaps between the targets 
-                assert all(toolsdivers.equals_approximately(10**0.2, ds.target[i] / ds.target[i+1]) for i in range(end-1))
-                # if this fails, we need to insert the missing target values 
+                print(fun_dim, ds.ert[0], "ert[0] != 1 in TargetValues.__call__")
+            try:
+                # check whether there are gaps between the targets
+                assert all(toolsdivers.equals_approximately(10**0.2, ds.target[i] / ds.target[i + 1]) for i in range(end - 1))
+                # if this fails, we need to insert the missing target values
             except AssertionError:
                 if 1 < 3:
-                    print(fun_dim, ds.ert[0], 'not all targets are recorded in TargetValues.__call__ (this could be a bug)')
+                    print(fun_dim, ds.ert[0], "not all targets are recorded in TargetValues.__call__ (this could be a bug)")
                     print(ds.target)
                     # 1/0
-        
+
         # here the test computation starts
         targets = []
-        if genericsettings.test: 
+        if genericsettings.test:
             for rl in self.run_lengths:
                 # choose largest target not achieved by reference ERT
                 indices = np.nonzero(ds.ert[:end] > np.max((1, rl * (fun_dim[1] if self.times_dimension else 1))))[0]
                 if len(indices):  # larger ert exists
-                    targets.append(np.max((ds.target[indices[0]],  # first missed target 
-                                           (1 + 1e-9) * ds.target[indices[0] - 1] / self.step_to_next_difficult_target))) # achieved target / 10*0.2
+                    targets.append(
+                        np.max(
+                            (
+                                ds.target[indices[0]],  # first missed target
+                                (1 + 1e-9) * ds.target[indices[0] - 1] / self.step_to_next_difficult_target,
+                            )
+                        )
+                    )  # achieved target / 10*0.2
                 else:
-                    # TODO: check whether this is the final target! If not choose a smaller than the last achieved one. 
-                    targets.append(ds.target[end-1])  # last target
+                    # TODO: check whether this is the final target! If not choose a smaller than the last achieved one.
+                    targets.append(ds.target[end - 1])  # last target
                     if targets[-1] > (1 + 1e-9) * self.smallest_target:
                         targets[-1] = (1 + 1e-9) * targets[-1] / self.step_to_next_difficult_target
-                
+
                 if len(targets) > 1 and targets[-1] >= targets[-2] and self.force_different_targets_factor > 1 and targets[-1] > self.smallest_target:
                     targets[-1] = targets[-2] / self.force_different_targets_factor
             targets = np.asarray(targets)
             targets[targets < self.smallest_target] = self.smallest_target
-            
+
             # a few more sanity checks
             if targets[-1] < self.smallest_target:
-                print('runlength based targets', fun_dim, ': correction for small smallest target applied (should never happen)')
+                print("runlength based targets", fun_dim, ": correction for small smallest target applied (should never happen)")
                 b = float(targets[0])
                 targets = np.exp(np.log(targets) * np.log(b / self.smallest_target) / np.log(b / targets[-1]))
                 targets *= (1 + 1e-12) * self.smallest_target / targets[-1]
@@ -458,30 +481,27 @@ class RunlengthBasedTargetValues(TargetValues):
             assert targets[-1] >= self.smallest_target
             assert len(targets) == 1 or all(np.diff(targets) <= 0)
             assert len(ds.ert) == len(ds.target)
-        
+
         # here the actual computation starts
         old_targets = targets
-        targets = [] 
+        targets = []
         for rl in self.run_lengths:
             # choose best target achieved by reference ERT times step_to_next_difficult_target
             indices = np.nonzero(ds.ert[:end] <= np.max((1, rl * (fun_dim[1] if self.times_dimension else 1))))[0]
             if not len(indices):
-                warnings.warn('  too easy run length ' + str(rl) +
-                              ' for (f,dim)=' + str(fun_dim))
+                warnings.warn("  too easy run length " + str(rl) + " for (f,dim)=" + str(fun_dim))
                 targets.append(ds.target[0])
             else:
-                targets.append((1 + 1e-9) * ds.target[indices[-1]]
-                               / self.step_to_next_difficult_target)
-            
-            if (len(targets) > 1 and targets[-1] >= targets[-2] and 
-                self.force_different_targets_factor > 1):
+                targets.append((1 + 1e-9) * ds.target[indices[-1]] / self.step_to_next_difficult_target)
+
+            if len(targets) > 1 and targets[-1] >= targets[-2] and self.force_different_targets_factor > 1:
                 targets[-1] = targets[-2] / self.force_different_targets_factor
         targets = np.asarray(targets)
         targets[targets < self.smallest_target] = self.smallest_target
 
         # a few more sanity checks
         if targets[-1] < self.smallest_target:
-            print('runlength based targets', fun_dim, ': correction for small smallest target applied (should never happen)')
+            print("runlength based targets", fun_dim, ": correction for small smallest target applied (should never happen)")
             b = float(targets[0])
             targets = np.exp(np.log(targets) * np.log(b / self.smallest_target) / np.log(b / targets[-1]))
             targets *= (1 + 1e-12) * self.smallest_target / targets[-1]
@@ -491,31 +511,31 @@ class RunlengthBasedTargetValues(TargetValues):
         assert len(targets) == 1 or all(np.diff(targets) <= 0)
         assert len(ds.ert) == len(ds.target)
 
-        if genericsettings.test and not all(targets == old_targets): # or (fun_dim[0] == 19 and len(targets) > 1):
-            print('WARNING: target values are different compared to previous version')
+        if genericsettings.test and not all(targets == old_targets):  # or (fun_dim[0] == 19 and len(targets) > 1):
+            print("WARNING: target values are different compared to previous version")
             print(fun_dim)
             print(targets / old_targets - 1)
             print(targets)
 
         if self.unique_target_values:
-            #len_ = len(targets)
+            # len_ = len(targets)
             targets = np.array(list(reversed(sorted(set(targets)))))
             # print(' '.join((str(len(targets)), 'of', str(len_), 'targets kept')))
         if discretize:
             return self._discretize(targets)
-        return targets    
+        return targets
 
     get_targets = __call__  # an alias
-    
+
     def label(self, i):
         """return i-th target value as string"""
         return toolsdivers.num2str(self.run_lengths[i], significant_digits=2)
 
     def loglabel(self, i, decimals=1):
         """``decimals`` is used for ``round``"""
-        return toolsdivers.num2str(np.log10(self.run_lengths[i]), significant_digits=decimals+1)
+        return toolsdivers.num2str(np.log10(self.run_lengths[i]), significant_digits=decimals + 1)
         # return str(np.round(np.log10(self.run_lengths[i]), decimals))
-    
+
     def labels(self):
         """target values as a list of ``str``"""
         i, res = 0, []
@@ -525,17 +545,17 @@ class RunlengthBasedTargetValues(TargetValues):
                 i += 1
         except IndexError:
             return res
-    
+
     def label_name(self):
-        return 'RL' + ('/dim' if self.times_dimension else '')
+        return "RL" + ("/dim" if self.times_dimension else "")
 
     def _generate_erts(self, ds, target_values):
         """compute for all target values, starting with 1e-8, the ert value
         and store it in the reference_data_set attribute
-        
+
         """
         raise NotImplementedError
-              
+
 
 class DataSet(object):
     """Unit element for the COCO post-processing.
@@ -554,8 +574,8 @@ class DataSet(object):
       - *dataFiles* -- associated data files (list of strings)
       - *comment* -- comment for the setting (string)
       - *targetFuncValue* -- final target function value (float), might be missing
-      - *precision* -- final ftarget - fopt (float), data with 
-                       target[idat] < precision are optional and not relevant.  
+      - *precision* -- final ftarget - fopt (float), data with
+                       target[idat] < precision are optional and not relevant.
       - *algId* -- algorithm name (string)
       - *evals* -- data aligned by function values (2xarray, list of data rows [f_val, eval_run1, eval_run2,...]); caveat: in a portfolio, data rows can have different lengths
       - *funvals* -- data aligned by function evaluations (2xarray)
@@ -584,7 +604,7 @@ class DataSet(object):
 
     A short example:
 
-        >>> from __future__ import print_function    
+        >>> from __future__ import print_function
         >>> import sys
         >>> import os
         >>> import urllib
@@ -661,8 +681,8 @@ class DataSet(object):
         >>> all(ds.evals[:, 0] == ds.target)  # first column of ds.evals is the "target" f-value
         True
         >>> # investigate row 0,10,20,... and of the result columns 0,5,6, index 0 is ftarget
-        >>> ev = ds.evals[0::10, (0,5,6)]  # doctest:+ELLIPSIS  
-        >>> assert 3.98107170e+07 <= ev[0][0] <= 3.98107171e+07 
+        >>> ev = ds.evals[0::10, (0,5,6)]  # doctest:+ELLIPSIS
+        >>> assert 3.98107170e+07 <= ev[0][0] <= 3.98107171e+07
         >>> assert ev[0][1] == 1
         >>> assert ev[0][2] == 1
         >>> assert 6.07000000e+03 <= ev[-1][-1] <= 6.07000001e+03
@@ -670,7 +690,7 @@ class DataSet(object):
         >>> ev = ds.evals[-1,(0,5,6)]  # doctest:+ELLIPSIS
         >>> assert ev[0] == 1e-8
         >>> assert 5.67600000e+03 <= ev[1] <= 5.67600001e+03
-        >>> ds.info()  # prints similar data more nicely formated 
+        >>> ds.info()  # prints similar data more nicely formated
         Algorithm: BIPOP-CMA-ES
         Function ID: 2
         Dimension DIM = 10
@@ -689,7 +709,7 @@ class DataSet(object):
         >>> import numpy as np
         >>> idx = list(range(0, 50, 10)) + [-1]
         >>> # get ERT (expected running time) for some targets
-        >>> t = np.array([idx, ds.target[idx], ds.ert[idx]]).T  # doctest:+ELLIPSIS  
+        >>> t = np.array([idx, ds.target[idx], ds.ert[idx]]).T  # doctest:+ELLIPSIS
         >>> assert t[0][0] == 0
         >>> assert t[0][2] == 1
         >>> assert t[-1][-2] == 1e-8
@@ -731,58 +751,60 @@ class DataSet(object):
         >>> cocopp.testbedsettings.GECCOBBOBTestbed.settings['instancesOfInterest'] = None
         >>> cocopp.config.config('bbob') # make sure that settings are used
 
-"""
+    """
 
     # TODO: unit element of the post-processing: one algorithm, one problem
     # TODO: if this class was to evolve, how do we make previous data
     # compatible?
 
     # Private attribute used for the parsing of info files.
-    _attributes = {'funcId': ('funcId', int), 
-                   'function': ('funcId', int), 
-                   'DIM': ('dim', int),
-                   'dim': ('dim', int),
-                   'Precision': ('precision', float), 
-                   'Fopt': ('fopt', float),
-                   'targetFuncValue': ('targetFuncValue', float),
-                   'indicator': ('indicator', str),
-                   'folder': ('folder', str),
-                   'algId': ('algId', str),
-                   'algorithm': ('algId', str),
-                   'suite': ('suite', str),
-                   'logger': ('logger', str),
-                   'coco_version': ('coco_version', str),
-                   'reference_values_hash': ('reference_values_hash', str),
-                   'data_format': ('data_format', str)}
+    _attributes = {
+        "funcId": ("funcId", int),
+        "function": ("funcId", int),
+        "DIM": ("dim", int),
+        "dim": ("dim", int),
+        "Precision": ("precision", float),
+        "Fopt": ("fopt", float),
+        "targetFuncValue": ("targetFuncValue", float),
+        "indicator": ("indicator", str),
+        "folder": ("folder", str),
+        "algId": ("algId", str),
+        "algorithm": ("algId", str),
+        "suite": ("suite", str),
+        "logger": ("logger", str),
+        "coco_version": ("coco_version", str),
+        "reference_values_hash": ("reference_values_hash", str),
+        "data_format": ("data_format", str),
+    }
 
     def isBiobjective(self):
-        return hasattr(self, 'indicator')
+        return hasattr(self, "indicator")
 
     def get_data_format(self):
-        # TODO: data_format is a specification of the files written by the 
+        # TODO: data_format is a specification of the files written by the
         # experiment loggers. I believe it was never meant to be a specification
         # for a data set.
-        if hasattr(self, 'data_format'):
-            return getattr(self, 'data_format')
+        if hasattr(self, "data_format"):
+            return getattr(self, "data_format")
         if self.isBiobjective():
-            return 'bbob-biobj'
+            return "bbob-biobj"
         return None
 
     @property
     def suite_name(self):
         """Returns a string, with the name of the DataSet's underlying test suite."""
         suite = None
-        if hasattr(self, 'suite'):
-            suite = getattr(self, 'suite')
-            if suite == 'sbox-cost':  # not sure whether this is necessary
-                suite = self.suite = 'bbob-boxed'
+        if hasattr(self, "suite"):
+            suite = getattr(self, "suite")
+            if suite == "sbox-cost":  # not sure whether this is necessary
+                suite = self.suite = "bbob-boxed"
         if not suite:
             if self.isBiobjective():
                 suite = testbedsettings.default_suite_bi
             else:
                 # detect by hand whether we are in the noisy or the
                 # noiseless case (TODO: is there a better way?)
-                if getattr(self, 'funcId') > 100:  # getattr prevents lint error
+                if getattr(self, "funcId") > 100:  # getattr prevents lint error
                     suite = testbedsettings.default_suite_single_noisy
                 else:
                     suite = testbedsettings.default_suite_single
@@ -800,25 +822,26 @@ class DataSet(object):
         :keyword string indexfile: string for the file name from where
                                    the information come
 
-    """
+        """
         # Extract information from the header line.
         self._extra_attr = []
         self.__parseHeader(header)
-        try: _algId = self.algId
-        except: _algId = None
+        try:
+            _algId = self.algId
+        except:
+            _algId = None
         # In biobjective case we have some header info in the data line.
         self.__parseHeader(data)
         if _algId and _algId != self.algId:
             warnings.warn("data overwrote header algId %s --> %s" % (_algId, self.algId))
         # Read in second line of entry (comment line). The information
         # is only stored if the line starts with "%", else it is ignored.
-        if comment.startswith('%'):
+        if comment.startswith("%"):
             self.comment = comment.strip()
         else:
-            #raise Exception()
-            warnings.warn('Comment line: %s is skipped,' % (comment) +
-                          'it does not start with %.')
-            self.comment = ''
+            # raise Exception()
+            warnings.warn("Comment line: %s is skipped," % (comment) + "it does not start with %.")
+            self.comment = ""
 
         filepath = os.path.split(indexfile)[0]
         self.indexFiles = [indexfile]
@@ -833,7 +856,7 @@ class DataSet(object):
             in ``_evals[i][0]`` and the function evaluation for which this
             target was reached the first time in trials 1,... in
             ``_evals[i][1:]``.
-            """ 
+            """
         self.isFinalized = []
         self.readmaxevals = []
         """ maxevals as read from the info files"""
@@ -843,31 +866,30 @@ class DataSet(object):
             testbedsettings.load_current_testbed(self.suite_name, TargetValues)
 
         # Split line in data file name(s) and run time information.
-        parts = data.split(', ')
+        parts = data.split(", ")
         idx_of_instances_to_load = []
         for elem in parts:
             elem = elem.strip()
-            if elem.endswith('dat'):
-                #Windows data to Linux processing
+            if elem.endswith("dat"):
+                # Windows data to Linux processing
                 filename = elem
                 # while elem.find('\\ ') >= 0:
                 #     filename = filename.replace('\\ ', '\\')
-                filename = filename.replace('\\', os.sep)
-                #Linux data to Windows processing
-                filename = filename.replace('/', os.sep)
-                
-                folder = getattr(self, 'folder', '')
+                filename = filename.replace("\\", os.sep)
+                # Linux data to Windows processing
+                filename = filename.replace("/", os.sep)
+
+                folder = getattr(self, "folder", "")
                 if folder:
                     filename = os.path.join(folder, filename)
-                    
+
                 self.dataFiles.append(filename)
-            elif '=' in elem: 
-                # It means header info in data line (biobjective). 
+            elif "=" in elem:
+                # It means header info in data line (biobjective).
                 # We just skip the element.
                 continue
             else:
-                if ':' not in elem:
-                    
+                if ":" not in elem:
                     # We might take only a subset of the given instances,
                     # given in testbedsettings.current_testbed.instancesOfInterest:
                     if testbedsettings.current_testbed.instancesOfInterest:
@@ -886,13 +908,11 @@ class DataSet(object):
                     # For now we leave it in.
                     idx_of_instances_to_load.append(True)
                     self.isFinalized.append(False)
-                    warnings.warn('Caught an ill-finalized run in %s for %s'
-                                  % (indexfile,
-                                     os.path.join(filepath, self.dataFiles[-1])))
+                    warnings.warn("Caught an ill-finalized run in %s for %s" % (indexfile, os.path.join(filepath, self.dataFiles[-1])))
                     self.readmaxevals.append(0)
                     self.readfinalFminusFtarget.append(numpy.inf)
                 else:
-                    itrial, info = elem.split(':', 1)
+                    itrial, info = elem.split(":", 1)
                     # We might take only a subset of the given instances,
                     # given in testbedsettings.current_testbed.instancesOfInterest:
                     if testbedsettings.current_testbed.instancesOfInterest:
@@ -906,33 +926,29 @@ class DataSet(object):
                     self.instancenumbers.append(ast.literal_eval(itrial))
                     idx_of_instances_to_load.append(True)
                     self.isFinalized.append(True)
-                    readmaxevals, readfinalf = info.split('|', 1)
+                    readmaxevals, readfinalf = info.split("|", 1)
                     self.readmaxevals.append(int(readmaxevals))
                     self.readfinalFminusFtarget.append(float(readfinalf))
 
         if _using_recommendations and self.dataFiles:  # in DataSet.__init__
-            self.dataFiles = [filename.replace('.dat', '.mdat')
-                              for filename in self.dataFiles]
+            self.dataFiles = [filename.replace(".dat", ".mdat") for filename in self.dataFiles]
         if genericsettings.verbose:
             print("%s" % self.__repr__())
 
         # Treat successively the data in dat and tdat files:
         # put into variable dataFiles the files where to look for data
         # this should not be necessary, as we just re-add the same ending!?
-        dataFiles = list(os.path.join(filepath, os.path.splitext(i)[0]
-                            + ('.mdat' if _using_recommendations else '.dat'))
-                         for i in self.dataFiles)
+        dataFiles = list(os.path.join(filepath, os.path.splitext(i)[0] + (".mdat" if _using_recommendations else ".dat")) for i in self.dataFiles)
         datasets, algorithms, reference_values, success_ratio = split(dataFiles, idx_to_load=idx_of_instances_to_load)
         dataformatsettings.current_data_format = dataformatsettings.data_format_name_to_class_mapping[self.get_data_format()]()
         data = HMultiReader(datasets)
         if genericsettings.verbose:
             print("Processing %s: %d/%d trials found." % (dataFiles, len(data), len(self.instancenumbers)))
-       
+
         if data:
             # this takes different data formats into account to compute
             # the _evals attribute and others into self:
-            maxevals, finalfunvals = dataformatsettings.current_data_format.align_data_into_evals(
-                                                align_data, data, self)
+            maxevals, finalfunvals = dataformatsettings.current_data_format.align_data_into_evals(align_data, data, self)
             # CAVEAT: maxevals may not be f-evaluations only
             # TODO: the above depends implicitely (in readalign.align_data)
             # on the global variable setting of
@@ -949,30 +965,27 @@ class DataSet(object):
             try:
                 for i in range(len(maxevals)):
                     self._maxevals[i] = max(maxevals[i], self._maxevals[i])
-                    self.finalfunvals[i] = (finalfunvals[i] if _using_recommendations
-                        else min(finalfunvals[i], self.finalfunvals[i]))
+                    self.finalfunvals[i] = finalfunvals[i] if _using_recommendations else min(finalfunvals[i], self.finalfunvals[i])
             except AttributeError:
                 self._maxevals = maxevals
                 self.finalfunvals = finalfunvals
 
-        dataFiles = list(os.path.join(filepath, os.path.splitext(i)[0] + '.tdat')
-                         for i in self.dataFiles)
-                             
+        dataFiles = list(os.path.join(filepath, os.path.splitext(i)[0] + ".tdat") for i in self.dataFiles)
+
         if not any(os.path.isfile(dataFile) for dataFile in dataFiles):
             warnings.warn("Missing tdat files in '%s'. Please consider to rerun the experiments." % filepath)
 
         datasets, algorithms, reference_values, success_ratio = split(dataFiles, idx_to_load=idx_of_instances_to_load)
         data = VMultiReader(datasets)
         if genericsettings.verbose:
-            print("Processing %s: %d/%d trials found."
-                   % (dataFiles, len(data), len(self.instancenumbers)))
-        
+            print("Processing %s: %d/%d trials found." % (dataFiles, len(data), len(self.instancenumbers)))
+
         if data:
             self.funvals, maxevals, finalfunvals = align_data(
-                data, 
+                data,
                 dataformatsettings.current_data_format.evaluation_idx,
                 dataformatsettings.current_data_format.function_value_idx,
-                )
+            )
             # was: (adata, maxevals, finalfunvals) = align_data(data)
             try:
                 for i in range(len(maxevals)):
@@ -981,33 +994,33 @@ class DataSet(object):
             except AttributeError:
                 self._maxevals = maxevals
                 self.finalfunvals = finalfunvals
-            #TODO: take for maxevals the max for each trial, for finalfunvals the min...
+            # TODO: take for maxevals the max for each trial, for finalfunvals the min...
 
             # maxevals and evals in the constrained case will give
             # values inconsistent with the previously set evals attribute
             # hence we read _lasttdatfilelines to be used in the maxfgevals property
             # which is constistent with the evals attribute also with constraints
             self._lasttdatfilelines = [d[-1] for d in datasets]
-    
-            #extensions = {'.dat':(HMultiReader, 'evals'), '.tdat':(VMultiReader, 'funvals')}
-            #for ext, info in extensions.items(): # ext is defined as global
-                ## put into variable dataFiles the files where to look for data
-                ## basically append 
-                #dataFiles = list(i.rsplit('.', 1)[0] + ext for i in self.dataFiles)
-                #data = info[0](split(dataFiles))
-                ## split is a method from readalign, info[0] is a method of readalign
-                #if genericsettings.verbose:
-                    #print("Processing %s: %d/%d trials found." #% (dataFiles, len(data), len(self.itrials)))
-                #(adata, maxevals, finalfunvals) = alignData(data)
-                #setattr(self, info[1], adata)
-                #try:
-                    #if all(maxevals > self.maxevals):
-                        #self.maxevals = maxevals
-                        #self.finalfunvals = finalfunvals
-                #except AttributeError:
-                    #self.maxevals = maxevals
-                    #self.finalfunvals = finalfunvals
-            #CHECKING PROCEDURE
+
+            # extensions = {'.dat':(HMultiReader, 'evals'), '.tdat':(VMultiReader, 'funvals')}
+            # for ext, info in extensions.items(): # ext is defined as global
+            ## put into variable dataFiles the files where to look for data
+            ## basically append
+            # dataFiles = list(i.rsplit('.', 1)[0] + ext for i in self.dataFiles)
+            # data = info[0](split(dataFiles))
+            ## split is a method from readalign, info[0] is a method of readalign
+            # if genericsettings.verbose:
+            # print("Processing %s: %d/%d trials found." #% (dataFiles, len(data), len(self.itrials)))
+            # (adata, maxevals, finalfunvals) = alignData(data)
+            # setattr(self, info[1], adata)
+            # try:
+            # if all(maxevals > self.maxevals):
+            # self.maxevals = maxevals
+            # self.finalfunvals = finalfunvals
+            # except AttributeError:
+            # self.maxevals = maxevals
+            # self.finalfunvals = finalfunvals
+            # CHECKING PROCEDURE
             tmp = []
             for i in range(min((len(self._maxevals), len(self.readmaxevals)))):
                 tmp.append(self._maxevals[i] == self.readmaxevals[i])
@@ -1016,31 +1029,29 @@ class DataSet(object):
             else:
                 tmp = not all(tmp)
             if tmp or len(self._maxevals) != len(self.readmaxevals):
-                warnings.warn('The maxevals from {} and {} disagree:'
-                              '\n  {}\n  {}'.format(
-                                  indexfile, dataFiles, self.readmaxevals, self._maxevals))
+                warnings.warn("The maxevals from {} and {} disagree:\n  {}\n  {}".format(indexfile, dataFiles, self.readmaxevals, self._maxevals))
             self._cut_data()
         if len(self._evals):
-            self._target = self._evals[:,0]  # needed for biobj best alg computation
+            self._target = self._evals[:, 0]  # needed for biobj best alg computation
         # Compute ERT (will be done lazy from .ert access)
         # self.computeERTfromEvals()
         # asserts don't help though
         # assert self._evals.shape[1] - 1 == len(self.instancenumbers), self
         # assert self.evals.shape[1] - 1 == len(self.maxevals), self
-        
+
     def _cut_data(self):
-        """attributes `target`, `evals`, and `ert` are truncated to target values not 
-        much smaller than defined in attribute `precision` (typically ``1e-8``). 
+        """attributes `target`, `evals`, and `ert` are truncated to target values not
+        much smaller than defined in attribute `precision` (typically ``1e-8``).
         Attribute `maxevals` is recomputed for columns that reach the final target
         precision. Note that in the bi-objective case the attribute `precision`
         does not exist.
-        
+
         """
 
         if isinstance(testbedsettings.current_testbed, testbedsettings.GECCOBBOBTestbed):
             Ndata = np.size(self._evals, 0)
             i = Ndata
-            while i > 1 and not self.isBiobjective() and self._evals[i-1][0] <= self.precision:
+            while i > 1 and not self.isBiobjective() and self._evals[i - 1][0] <= self.precision:
                 i -= 1
             i += 1
             if i < Ndata:
@@ -1050,11 +1061,11 @@ class DataSet(object):
                 except AttributeError:
                     pass
             assert self._evals.shape[0] == 1 or self.isBiobjective() or self._evals[-2][0] > self.precision
-            if not self.isBiobjective() and self._evals[-1][0] < self.precision: 
-                self._evals[-1][0] = np.max((self.precision / 1.001, self._evals[-1, 0])) 
+            if not self.isBiobjective() and self._evals[-1][0] < self.precision:
+                self._evals[-1][0] = np.max((self.precision / 1.001, self._evals[-1, 0]))
                 # warnings.warn('exact final precision was not recorded, next lower value set close to final precision')
                 # print('*** warning: final precision was not recorded')
-                assert self._evals[-1][0] < self.precision # shall not have changed
+                assert self._evals[-1][0] < self.precision  # shall not have changed
             assert self._evals[-1][0] > 0
             self._maxevals = self._detMaxEvals()
 
@@ -1064,23 +1075,22 @@ class DataSet(object):
 
     def consistency_check(self):
         """checks consistency of data set according to
-           - number of instances           
-           - instances used
+        - number of instances
+        - instances used
         """
         is_consistent = True
-        
+
         instancedict = dict((j, self.instancenumbers.count(j)) for j in set(self.instancenumbers))
-        
-        if '% Combination of ' in self.comment:
+
+        if "% Combination of " in self.comment:
             # a short test for BestAlgSet...
             return self.instancenumbers == [0]
-        
+
         # We might take only a subset of all provided instances...
         if not testbedsettings.current_testbed:
-            expectedNumberOfInstances = 15 # standard choice
-        elif not testbedsettings.current_testbed.instancesOfInterest: # case of no specified instances
-            expectedNumberOfInstances = 10 if isinstance(testbedsettings.current_testbed,
-                    testbedsettings.GECCOBiObjBBOBTestbed) else 15
+            expectedNumberOfInstances = 15  # standard choice
+        elif not testbedsettings.current_testbed.instancesOfInterest:  # case of no specified instances
+            expectedNumberOfInstances = 10 if isinstance(testbedsettings.current_testbed, testbedsettings.GECCOBiObjBBOBTestbed) else 15
         else:
             expectedNumberOfInstances = len(testbedsettings.current_testbed.instancesOfInterest)
         if len(set(self.instancenumbers)) < len(self.instancenumbers):
@@ -1088,37 +1098,46 @@ class DataSet(object):
             counts = [self.instancenumbers.count(i) for i in set(self.instancenumbers)]
             if not len(set(counts)) == 1:  # require same number of repetition per instance
                 is_consistent = False
-                warnings.warn('  double instances in ' + 
-                                str(self.instancenumbers) + 
-                                ' (f' + str(self.funcId) + ', ' + str(self.dim)
-                                + 'D)')
-        elif len(self.instancenumbers) < expectedNumberOfInstances and (
-                not hasattr(self, 'used_algorithms') and self.algId != 'bestCustomAlg'):
+                warnings.warn("  double instances in " + str(self.instancenumbers) + " (f" + str(self.funcId) + ", " + str(self.dim) + "D)")
+        elif len(self.instancenumbers) < expectedNumberOfInstances and (not hasattr(self, "used_algorithms") and self.algId != "bestCustomAlg"):
             is_consistent = False
-            warnings.warn('  less than ' + str(expectedNumberOfInstances) +
-                                ' instances in the set ' + 
-                                str(self.instancenumbers) + 
-                                ' (f' + str(self.funcId) + ', ' +
-                                str(self.dim) + 'D)')
+            warnings.warn(
+                "  less than "
+                + str(expectedNumberOfInstances)
+                + " instances in the set "
+                + str(self.instancenumbers)
+                + " (f"
+                + str(self.funcId)
+                + ", "
+                + str(self.dim)
+                + "D)"
+            )
         elif len(self.instancenumbers) > expectedNumberOfInstances:
             is_consistent = False
-            warnings.warn('  more than ' + str(expectedNumberOfInstances) + 
-                                ' instances in ' + 
-                                str(self.instancenumbers)+ 
-                                ' (f' + str(self.funcId) + ', ' + 
-                                str(self.dim) + 'D)')
-        elif instancedict not in genericsettings.instancesOfInterest and (
-                not hasattr(self, 'used_algorithms') and self.algId != 'bestCustomAlg'):
+            warnings.warn(
+                "  more than "
+                + str(expectedNumberOfInstances)
+                + " instances in "
+                + str(self.instancenumbers)
+                + " (f"
+                + str(self.funcId)
+                + ", "
+                + str(self.dim)
+                + "D)"
+            )
+        elif instancedict not in genericsettings.instancesOfInterest and (not hasattr(self, "used_algorithms") and self.algId != "bestCustomAlg"):
             is_consistent = False
-            warnings.warn('  instance numbers not among the ones specified'
-                          ' by cocopp.genericsettings.instancesOfInterest={0}'
-                          .format(genericsettings.instancesOfInterest))
+            warnings.warn(
+                "  instance numbers not among the ones specified by cocopp.genericsettings.instancesOfInterest={0}".format(
+                    genericsettings.instancesOfInterest
+                )
+            )
         if not is_consistent:
-            warnings.warn('Some DataSet of {0} was not consistent'.format(self.algId))  # should rather be in the previous messages
+            warnings.warn("Some DataSet of {0} was not consistent".format(self.algId))  # should rather be in the previous messages
         assert self._evals.shape[1] - 1 == len(self.instancenumbers), self
         assert self.evals.shape[1] - 1 == len(self.maxevals), self
         return is_consistent
-            
+
     def computeERTfromEvals(self):
         """Sets the attributes ert and target from the attribute evals."""
         if isinstance(self.maxevals, dict):
@@ -1138,7 +1157,7 @@ class DataSet(object):
                     s += sum(self.maxevals[np.logical_not(succ)])
                 self._ert.append(s / sum(succ))
             if np.random.rand() < 0.01:  # old code for cross checking, to be removed TODO
-                succ = (numpy.isnan(data)==False)
+                succ = numpy.isnan(data) == False
                 if any(numpy.isnan(data)):
                     data = data.copy()
                     data[numpy.isnan(data)] = self.maxevals[numpy.isnan(data)]
@@ -1152,14 +1171,16 @@ class DataSet(object):
         # assert self._evals.shape[1] - 1 == len(self.instancenumbers), self
         # assert self.evals.shape[1] - 1 == len(self.maxevals), self
 
-    def evals_with_simulated_restarts(self,
-            targets,
-            samplesize=None,
-            randintfirst=toolsstats.randint_derandomized,
-            randintrest=np.random.randint,  # TODO: why not derandomized?
-            bootstrap=False,
-            instance=None,
-            instances_are_uniform=None):
+    def evals_with_simulated_restarts(
+        self,
+        targets,
+        samplesize=None,
+        randintfirst=toolsstats.randint_derandomized,
+        randintrest=np.random.randint,  # TODO: why not derandomized?
+        bootstrap=False,
+        instance=None,
+        instances_are_uniform=None,
+    ):
         """Return a `list` of arrays of "simulated runtimes"
 
         with an interface analogous to `detEvals`. Elements of the returned
@@ -1251,6 +1272,7 @@ class DataSet(object):
             while samplesize < s:  # TODO: this is not suitable if we have 5 successful instances?
                 samplesize += self.nbRuns()
             return samplesize
+
         def best_samplesize(evals):
             """adhoc heuristic for a sample size, not clear what is good"""
             n = len(evals)
@@ -1260,13 +1282,14 @@ class DataSet(object):
                 return 1  # return [np.nan]
             if nsucc == n:
                 return n
-            fails = evals[evals<0]
-            succs = evals[evals>0]
+            fails = evals[evals < 0]
+            succs = evals[evals > 0]
             b = 4  # makes the smallest denominator to be 5
             r0 = (min(fails) - b) / (max(fails) - b)  # fails are negative values
             r1 = (b + max(succs)) / (b + min(succs))
-            s = int(n * (1 + nfail**0.5) * max((r0, r1))**0.25)
+            s = int(n * (1 + nfail**0.5) * max((r0, r1)) ** 0.25)
             return fit_sample_size(s)
+
         def _byinstance_samplesize():
             """overall samplesize for within-instance restarts,
 
@@ -1279,10 +1302,12 @@ class DataSet(object):
             if samplesize == str(samplesize):
                 return 5 * self.nbRuns()  # gets divided by len(detEvals_by_instance())
             return samplesize
+
         def _sample_size(evals):
-            if samplesize_ == 'individual':
+            if samplesize_ == "individual":
                 return best_samplesize(evals)
             return samplesize
+
         def instances_are_singular(evals_dict):
             """check whether the number of runs per instance equals 1
 
@@ -1296,6 +1321,7 @@ class DataSet(object):
                 if len(evals_by_target[0]) > 1:  # all targets have the same number of data, so we need to check only the first
                     return False
             return True
+
         def identity(x):
             return x
 
@@ -1306,27 +1332,28 @@ class DataSet(object):
         if instances_are_uniform is None:
             instances_are_uniform = testbedsettings.current_testbed.instances_are_uniform
         if instances_are_uniform or instance is not None:
-            evals_list = self.detEvals(targets, copy=True, bootstrap=bootstrap,
-                                       complement_unsuccessful=-1, instance=instance)
-            return [toolsstats.simulated_evals(evals,
-                        -1, _sample_size(evals), randintfirst, randintrest, np.asarray)
-                    for evals in evals_list]
+            evals_list = self.detEvals(targets, copy=True, bootstrap=bootstrap, complement_unsuccessful=-1, instance=instance)
+            return [toolsstats.simulated_evals(evals, -1, _sample_size(evals), randintfirst, randintrest, np.asarray) for evals in evals_list]
         # we need within instance simulated restarts
         if bootstrap:
-            warnings.warn("bootstrap={0} is not fully compatible with "
-                          "instances_are_uniform={1} because bootstrap "
-                          "is currently done over all instances"
-                          .format(bootstrap, instances_are_uniform))
-        evals_dict = self.detEvals_by_instance(targets,
-                raw_values=True,  # doesn't matter because sampling balances instances
-                copy=True, bootstrap=bootstrap, complement_unsuccessful=-1)
+            warnings.warn(
+                "bootstrap={0} is not fully compatible with instances_are_uniform={1} because bootstrap is currently done over all instances".format(
+                    bootstrap, instances_are_uniform
+                )
+            )
+        evals_dict = self.detEvals_by_instance(
+            targets,
+            raw_values=True,  # doesn't matter because sampling balances instances
+            copy=True,
+            bootstrap=bootstrap,
+            complement_unsuccessful=-1,
+        )
         res = len(targets) * [[]]
         instances_are_singular_ = instances_are_singular(evals_dict)
         ssum = _byinstance_samplesize()
         for count, evals_list in enumerate(evals_dict.values()):  # for each instance
             for t, evals in enumerate(evals_list):  # for each target
-                ssingle = int(np.round((ssum - len(res[t]))
-                                    / (len(evals_dict) - count)))
+                ssingle = int(np.round((ssum - len(res[t])) / (len(evals_dict) - count)))
                 if samplesize_ is None and instances_are_singular_:
                     assert len(evals) == 1, evals
                     res[t].extend(evals)
@@ -1335,12 +1362,10 @@ class DataSet(object):
                 # or nan for *all* instances and *all* targets to
                 # circumvent simulated_evals
                 else:
-                    res[t].extend(toolsstats.simulated_evals(evals,
-                                -1, ssingle, randintfirst, randintrest, identity))
+                    res[t].extend(toolsstats.simulated_evals(evals, -1, ssingle, randintfirst, randintrest, identity))
         return [np.asarray(r) for r in res]
 
-    def _evals_with_simulated_restarts(self, evals_list, samplesize,
-                                       randintfirst, randintrest):
+    def _evals_with_simulated_restarts(self, evals_list, samplesize, randintfirst, randintrest):
         """OBSOLETE (never used?), rather use toolsstats.simulated_evals. return simulated runtimes for each 1D-array in `evals_list`.
 
         Change elements of `evals_list` in place.
@@ -1363,8 +1388,7 @@ class DataSet(object):
                 continue
             nindices = ~indices
             assert sum(indices) + sum(nindices) == len(evals)
-            assert not do_sort or max(np.nonzero(indices)[0]) < min(np.nonzero(nindices)[0]), (
-                indices, nindices)
+            assert not do_sort or max(np.nonzero(indices)[0]) < min(np.nonzero(nindices)[0]), (indices, nindices)
             evals[nindices] = self.maxevals[nindices]  # replace nan
             # let the first nsucc data in evals be those from successful runs
             if not do_sort:
@@ -1380,42 +1404,40 @@ class DataSet(object):
                 indices = randintrest(0, len(evals), len(failing))
                 sums[failing] += evals[indices]
                 # retain failing indices
-                failing = [failing[i] for i in range(len(failing))
-                            if indices[i] >= nsucc]
+                failing = [failing[i] for i in range(len(failing)) if indices[i] >= nsucc]
             res += [sums]
 
         for evals in res:
             evals.sort()
 
-        assert set([len(evals) if evals is not None else samplesize
-                for evals in res]) == set([samplesize])
+        assert set([len(evals) if evals is not None else samplesize for evals in res]) == set([samplesize])
         return res
 
     def __eq__(self, other):
         """Compare indexEntry instances."""
-        res = (self.__class__ is other.__class__ and
-               self.funcId == other.funcId and
-               self.dim == other.dim and
-               (self.isBiobjective() or self.precision == other.precision) and
-               self.algId == other.algId and
-               self.comment == other.comment)
-        if hasattr(self, '_extra_attr'): # Backward compatibility
+        res = (
+            self.__class__ is other.__class__
+            and self.funcId == other.funcId
+            and self.dim == other.dim
+            and (self.isBiobjective() or self.precision == other.precision)
+            and self.algId == other.algId
+            and self.comment == other.comment
+        )
+        if hasattr(self, "_extra_attr"):  # Backward compatibility
             for i in self._extra_attr:
-                res = (res and hasattr(other, i) and
-                       getattr(other, i) == getattr(self, i))
+                res = res and hasattr(other, i) and getattr(other, i) == getattr(self, i)
                 if not res:
                     break
         return res
 
-    def __ne__(self,other):
+    def __ne__(self, other):
         return not self.__eq__(other)
 
     def __repr__(self):
-        res = ('DataSet(%s on f%s %d-D'
-               % (self.algId, str(self.funcId), self.dim))
-        for i in getattr(self, '_extra_attr', ()):
-            res += ', %s = %s' % (i, getattr(self, i))
-        res += ')'
+        res = "DataSet(%s on f%s %d-D" % (self.algId, str(self.funcId), self.dim)
+        for i in getattr(self, "_extra_attr", ()):
+            res += ", %s = %s" % (i, getattr(self, i))
+        res += ")"
         return res
 
     def info_str(self, targets=None):
@@ -1423,37 +1445,37 @@ class DataSet(object):
         if targets is None:
             targets = [1e3, 10, 0.1, 1e-3, 1e-5, 1e-8]
             if self.target[-1] < targets[-1]:
-                targets += [self.target[-1]]  
+                targets += [self.target[-1]]
         if targets[-1] < self.target[-1]:
             targets[-1] = self.target[-1]
         targets = sorted(set(targets), reverse=True)  # remove dupicates and sort
 
-        sinfo = 'Algorithm: ' + str(self.algId)
-        sinfo += '\nFunction ID: ' + str(self.funcId)
-        sinfo += '\nDimension DIM = ' + str(self.dim)
-        sinfo += '\nNumber of trials: ' + str(self.nbRuns())
-        if not self.isBiobjective():        
-            sinfo += '\nFinal target Df: ' + str(self.precision)
+        sinfo = "Algorithm: " + str(self.algId)
+        sinfo += "\nFunction ID: " + str(self.funcId)
+        sinfo += "\nDimension DIM = " + str(self.dim)
+        sinfo += "\nNumber of trials: " + str(self.nbRuns())
+        if not self.isBiobjective():
+            sinfo += "\nFinal target Df: " + str(self.precision)
         # sinfo += '\nmin / max number of evals: '  + str(int(min(self.evals[0]))) + ' / '  + str(int(max(self.maxevals)))
-        sinfo += '\nmin / max number of evals per trial: '  + str(int(min(self.maxevals))) + ' / '  + str(int(max(self.maxevals)))
-        sinfo += '\n   evals/DIM:  best     15%     50%     85%     max |  ERT/DIM  nsucc'
-        sinfo += '\n  ---Df---|-----------------------------------------|----------------'
+        sinfo += "\nmin / max number of evals per trial: " + str(int(min(self.maxevals))) + " / " + str(int(max(self.maxevals)))
+        sinfo += "\n   evals/DIM:  best     15%     50%     85%     max |  ERT/DIM  nsucc"
+        sinfo += "\n  ---Df---|-----------------------------------------|----------------"
         evals = self.detEvals(targets, copy=False)
         nsucc = self.detSuccesses(targets)
         ert = self.detERT(targets)
         for i, target in enumerate(targets):
-            line = '  %.1e |' % target
+            line = "  %.1e |" % target
             for val in toolsstats.prctile(evals[i], (0, 15, 50, 85, 100)):
                 val = float(val)
-                line += ' %7d' % int(np.round(val / self.dim)) if not np.isnan(val) else '     .  '
-            line += ' |' + ('%9.1f' % (ert[i] / self.dim) if np.isfinite(ert[i]) else '    nan  ') 
+                line += " %7d" % int(np.round(val / self.dim)) if not np.isnan(val) else "     .  "
+            line += " |" + ("%9.1f" % (ert[i] / self.dim) if np.isfinite(ert[i]) else "    nan  ")
             # line += '  %4.2f' % (nsucc[i] / float(Nruns)) if nsucc[i] < Nruns else '  1.0 '
-            line += '  %2d' % nsucc[i]
-            sinfo += '\n' + line
+            line += "  %2d" % nsucc[i]
+            sinfo += "\n" + line
             if target < self.target[-1]:
                 break
         return sinfo
-        
+
     def info(self, targets=None):
         """print text info to stdout"""
         print(self.info_str(targets))
@@ -1472,23 +1494,23 @@ class DataSet(object):
         return self._number_of_constraints
 
     def mMaxEvals(self):
-        """Returns the maximum number of function evaluations over all runs (trials), 
+        """Returns the maximum number of function evaluations over all runs (trials),
         obsolete and replaced by attribute `max_eval`
-        
+
         """
         return max(self.maxevals)
-    
+
     def _detMaxEvals(self, final_target=None):
         """computes for each data column of _evals the (maximal) evaluation
-        until final_target was reached, or ``self.maxevals`` otherwise. 
-        
+        until final_target was reached, or ``self.maxevals`` otherwise.
+
         """
         if final_target is None:
             final_target = self.precision if not self.isBiobjective() else 1e-8
         res = np.array(self._maxevals, copy=True) if not maximal_evaluations_only_to_last_target else np.nanmax(self._evals, 0)
-        final_evals = self.detEvals([final_target])[0][:len(res)]  # remove instance balancing columns
+        final_evals = self.detEvals([final_target])[0][: len(res)]  # remove instance balancing columns
         idx = np.isfinite(final_evals)
-        res[idx] = final_evals[idx] 
+        res[idx] = final_evals[idx]
         assert sum(res < np.inf) == len(res)
         assert len(res) == len(self.instancenumbers)
         return res
@@ -1496,7 +1518,7 @@ class DataSet(object):
     @property
     def target(self):
         """target values (`np.array`) corresponding to `ert` (which all have finite values)"""
-        if hasattr(self, '_target'):
+        if hasattr(self, "_target"):
             return self._target  # was set in `computeERTfromEvals` (or elsewhere)
         # this fallback may never be useful?
         return np.asarray([row[0] for row in self._evals if any(np.isfinite(row[1:]))])
@@ -1514,10 +1536,9 @@ class DataSet(object):
         weighted to make up for unbalanced problem instance occurances.
         """
         if not isinstance(self.maxevals, dict) and (  # bestalg DataSets have correctly computed _ert
-            not hasattr(self, '_ert_nb_of_data') or   # evals may contain column copies for balancing
-            set((self._ert_nb_of_data,
-                 len(self.evals[0]) - 1,
-                 len(self.maxevals))).__len__() > 1):
+            not hasattr(self, "_ert_nb_of_data")  # evals may contain column copies for balancing
+            or set((self._ert_nb_of_data, len(self.evals[0]) - 1, len(self.maxevals))).__len__() > 1
+        ):
             self.computeERTfromEvals()
         return self._ert
 
@@ -1525,7 +1546,7 @@ class DataSet(object):
     def max_eval(self):
         """maximum number of function evaluations over all runs (trials),
 
-            return max(self.maxevals)
+        return max(self.maxevals)
 
         """
         return max(self.maxevals)
@@ -1542,9 +1563,7 @@ class DataSet(object):
             return self.maxfgevals
 
         if self._need_balancing:
-            return np.hstack([self._maxevals, np.hstack([(m - 1) * [self._maxevals[i]]
-                              for i, m in enumerate(self.instance_multipliers)
-                                    if m > 1])])
+            return np.hstack([self._maxevals, np.hstack([(m - 1) * [self._maxevals[i]] for i, m in enumerate(self.instance_multipliers) if m > 1])])
         return self._maxevals
 
     @property
@@ -1565,14 +1584,11 @@ class DataSet(object):
         as values and the source file or folder as key.
         """
         if testbedsettings.current_testbed.has_constraints:
-            raw = [sum(a[:2] * genericsettings.weight_evaluations_constraints)
-                        for a in self._lasttdatfilelines]
+            raw = [sum(a[:2] * genericsettings.weight_evaluations_constraints) for a in self._lasttdatfilelines]
         else:  # prevent wrong data when second column is f-values rather than constraints
             raw = [a[0] for a in self._lasttdatfilelines]
         if self._need_balancing:
-            return np.hstack([raw, np.hstack([(m - 1) * [raw[i]]
-                              for i, m in enumerate(self.instance_multipliers)
-                                    if m > 1])])
+            return np.hstack([raw, np.hstack([(m - 1) * [raw[i]] for i, m in enumerate(self.instance_multipliers) if m > 1])])
         return np.asarray(raw)  # type consistent with maxevals
 
     @property
@@ -1580,9 +1596,8 @@ class DataSet(object):
         return numpy.shape(self._evals)[1] - 1
 
     def nbRuns(self):
-        """Returns the number of runs depending on `genericsettings.balance_instances`.
-        """
-        return numpy.shape(self.evals)[1] - 1 
+        """Returns the number of runs depending on `genericsettings.balance_instances`."""
+        return numpy.shape(self.evals)[1] - 1
 
     def bootstrap_sample_size(self, sample_size=genericsettings.simulated_runlength_bootstrap_sample_size):
         """return minimum size not smaller than `sample_size` such that modulo self.nbRuns() == 0"""
@@ -1592,76 +1607,72 @@ class DataSet(object):
 
     def __parseHeader(self, header):
         """Extract data from a header line in an index entry."""
-        
+
         # Split header into a list of key-value
         for attrname, attrvalue in parseinfo(header):
-            if attrname == 'suite' and attrvalue == 'sbox-cost':
-                attrvalue = 'bbob-boxed'
+            if attrname == "suite" and attrvalue == "sbox-cost":
+                attrvalue = "bbob-boxed"
             try:
                 setattr(self, self._attributes[attrname][0], attrvalue)
             except KeyError:
-                warnings.warn('%s is an additional attribute.' % (attrname))
+                warnings.warn("%s is an additional attribute." % (attrname))
                 setattr(self, attrname, attrvalue)
                 self._extra_attr.append(attrname)
                 # the attribute is set anyway, this might lead to some errors.
                 continue
-        #TODO: check that no compulsory attributes is missing:
-        #dim, funcId, algId, precision
+        # TODO: check that no compulsory attributes is missing:
+        # dim, funcId, algId, precision
         return
 
     def pickle(self, outputdir=None, gzipped=True):
         """Save this instance to a pickle file.
 
-        Saves this instance to a (by default gzipped) pickle file. If not 
-        specified by argument outputdir, the location of the pickle is 
+        Saves this instance to a (by default gzipped) pickle file. If not
+        specified by argument outputdir, the location of the pickle is
         given by the location of the first index file associated to this
         instance.
 
         This method will overwrite existing files.
 
         This method is not in use. Instead, `get_DataSetList` pickles a `DataSetList`.
-        
+
         """
         if _using_recommendations:
-            warnings.warn('no pickle file is created because cocopp.pproc._using_recommendations={}'
-                          .format(_using_recommendations))
+            warnings.warn("no pickle file is created because cocopp.pproc._using_recommendations={}".format(_using_recommendations))
             return
         # the associated pickle file does not exist
-        if outputdir is not None and getattr(self, 'pickleFile', False):
-            NotImplementedError('outputdir and pickleFile attribute are in conflict')
+        if outputdir is not None and getattr(self, "pickleFile", False):
+            NotImplementedError("outputdir and pickleFile attribute are in conflict")
 
-        if not getattr(self, 'pickleFile', False):  # no attribute returns False, == not hasattr(self, 'pickleFile')
+        if not getattr(self, "pickleFile", False):  # no attribute returns False, == not hasattr(self, 'pickleFile')
             if outputdir is None:
-                outputdir = os.path.split(self.indexFiles[0])[0] + '-pickle'
+                outputdir = os.path.split(self.indexFiles[0])[0] + "-pickle"
             if not os.path.isdir(outputdir):
                 try:
                     os.mkdir(outputdir)
                 except OSError:
-                    print('Could not create output directory % for pickle files'
-                           % outputdir)
+                    print("Could not create output directory % for pickle files" % outputdir)
                     raise
 
-            self.pickleFile = os.path.join(outputdir,
-                                           'ppdata_f%03d_%02d.pickle'
-                                            %(self.funcId, self.dim))
+            self.pickleFile = os.path.join(outputdir, "ppdata_f%03d_%02d.pickle" % (self.funcId, self.dim))
 
-        if getattr(self, 'modsFromPickleVersion', True):
+        if getattr(self, "modsFromPickleVersion", True):
             try:
                 if gzipped:
-                    if self.pickleFile.find('.gz') < 0:
-                        self.pickleFile += '.gz'
-                    f = gzip.open(self.pickleFile, 'w')
-                else:        
-                    f = open(self.pickleFile, 'w') # TODO: what if file already exist?
+                    if self.pickleFile.find(".gz") < 0:
+                        self.pickleFile += ".gz"
+                    f = gzip.open(self.pickleFile, "w")
+                else:
+                    f = open(self.pickleFile, "w")  # TODO: what if file already exist?
                 pickle.dump(self, f)
                 f.close()
                 if genericsettings.verbose > 0:
-                    print('Saved pickle in %s.' %(self.pickleFile))
+                    print("Saved pickle in %s." % (self.pickleFile))
             except IOError as e:
                 print("I/O error(%s): %s" % (e.errno, e.strerror))
             except pickle.PicklingError:
-                print("Could not pickle %s" %(self))
-                
+                print("Could not pickle %s" % (self))
+
     def createDictInstance(self):
         """Returns a dictionary of the instances.
 
@@ -1676,10 +1687,10 @@ class DataSet(object):
 
     def createDictInstanceCount(self):
         """Returns a dictionary of the instances and their count.
-        
+
         The keys are instance id and the values are the number of
         repetitions of such instance.
-        
+
         """
         return dict((j, self.instancenumbers.count(j)) for j in set(self.instancenumbers))
 
@@ -1707,15 +1718,13 @@ class DataSet(object):
         funvals = {}
 
         for instanceid, idx in dictinstance.items():
-            evals[instanceid] = self.evals[:,
-                                           numpy.ix_(list(i + 1 for i in idx))]
-            funvals[instanceid] = self.funvals[:,
-                                           numpy.ix_(list(i + 1 for i in idx))]
+            evals[instanceid] = self.evals[:, numpy.ix_(list(i + 1 for i in idx))]
+            funvals[instanceid] = self.funvals[:, numpy.ix_(list(i + 1 for i in idx))]
 
-        if whichdata :
-            if whichdata == 'evals':
+        if whichdata:
+            if whichdata == "evals":
                 return evals
-            elif whichdata == 'funvals':
+            elif whichdata == "funvals":
                 return funvals
 
         return (evals, funvals)
@@ -1742,7 +1751,7 @@ class DataSet(object):
             line = advance_iterator(it)
         except StopIteration:
             # evals is an empty array
-            return res #list()
+            return res  # list()
 
         for t in sorted(targets):
             while line[0] <= t:
@@ -1765,7 +1774,7 @@ class DataSet(object):
 
         If a target is not reached within trial itrail,
         self.maxevals[itrial] contributes to the average.
-        
+
         Equals to sum(evals(target)) / nbruns. If ERT is finite
         this equals to ERT * psucc == (sum(evals) / ntrials / psucc) * psucc,
         where ERT, psucc, and evals are a function of target.
@@ -1777,14 +1786,18 @@ class DataSet(object):
         evalsums = []
         for evalrow in self.detEvals(targets):
             idxnan = np.isnan(evalrow)
-            evalsums.append(sum(evalrow[idxnan==False]) + sum(self.maxevals[idxnan]))
-        
+            evalsums.append(sum(evalrow[idxnan == False]) + sum(self.maxevals[idxnan]))
+
         averages = np.asarray(evalsums) / self.nbRuns()
-            
+
         if do_assertion:
-            assert all([(ert == np.inf and ps == 0) or toolsdivers.equals_approximately(ert,  averages[i] / ps)
-                            for i, (ert, ps) in enumerate(zip(self.detERT(targets), self.detSuccessRates(targets)))]) 
-        
+            assert all(
+                [
+                    (ert == np.inf and ps == 0) or toolsdivers.equals_approximately(ert, averages[i] / ps)
+                    for i, (ert, ps) in enumerate(zip(self.detERT(targets), self.detSuccessRates(targets)))
+                ]
+            )
+
         return averages
 
     def detSuccesses(self, targets, raw_values=False):
@@ -1812,7 +1825,7 @@ class DataSet(object):
         return succ
 
     def detSuccessRates(self, targets):
-        """return a np.array with the success rate for each target 
+        """return a np.array with the success rate for each target
         in targets, easiest target first.
 
         If `genericsetting.balance_instances`, the rate is weighted such
@@ -1823,7 +1836,7 @@ class DataSet(object):
 
     def detERT(self, targets):
         """Determine the expected running time (ERT) to reach target values.
-        The value is numpy.inf, if the target was never reached. 
+        The value is numpy.inf, if the target was never reached.
 
         :keyword list targets: target function values of interest
 
@@ -1852,15 +1865,13 @@ class DataSet(object):
                     line = advance_iterator(it)
                 except StopIteration:
                     break
-            res[t] = prevline.copy() # is copy necessary? Yes. 
+            res[t] = prevline.copy()  # is copy necessary? Yes.
 
         # Return a list of ERT corresponding to the input targets in
         # targets, sorted along targets
         return list(res[i][1] for i in targets)
 
-    def detEvals(self, targets, copy=True, bootstrap=False,
-                 append_instances=False, complement_unsuccessful=False,
-                 instance=None):
+    def detEvals(self, targets, copy=True, bootstrap=False, append_instances=False, complement_unsuccessful=False, instance=None):
         """return ``len(targets)`` data rows ``self.evals[i, 1:]``.
 
         If `bootstrap`, the "data rows" are ``len(self.evals[i, 1:])``
@@ -1885,7 +1896,7 @@ class DataSet(object):
         future.
 
         Details:
-        
+
         `maxevals` are usually read from the .info files, however with
         constraints they are read from the .tdat files as the .info files
         do not contain g-evaluations.
@@ -1893,17 +1904,16 @@ class DataSet(object):
         If `instances_are_appended`, the `maxevals` attribute is not
         consistent with `evals_appended`. The latter is abandoned anyways
         and superseded by evals_balanced (which is more or less automatic)!?
-    """
+        """
         evals = self.evals
         if append_instances:  # TODO: add append_instances=True in toolstats line 709
             warnings.warn("append_instances was never thoroughly tested")
             evals = self.evals_appended
         if len(self.maxevals) != len(self.evals[0]) - 1:
-            warnings.warn("{0} = len(self.maxevals) != len(self.evals[0]) - 1 = {1}"
-                          .format(len(self.maxevals), len(self.evals[0]) - 1)
-                          + (", hence option ``complement_unsuccessful={0}`` is ignored"
-                                .format(complement_unsuccessful)
-                             if complement_unsuccessful else ''))
+            warnings.warn(
+                "{0} = len(self.maxevals) != len(self.evals[0]) - 1 = {1}".format(len(self.maxevals), len(self.evals[0]) - 1)
+                + (", hence option ``complement_unsuccessful={0}`` is ignored".format(complement_unsuccessful) if complement_unsuccessful else "")
+            )
             complement_unsuccessful = False
         evalsrows = {}  # data rows with target as key
         idata = evals.shape[0] - 1  # current data line index
@@ -1919,13 +1929,13 @@ class DataSet(object):
                 while idata > 0 and evals[idata - 1, 0] <= target:
                     # idata-1 line is good enough, hence move up
                     idata -= 1
-                assert evals[idata, 0] <= target and (idata == 0
-                    or evals[idata - 1, 0] > target), (target, idata, evals[idata, 0])
+                assert evals[idata, 0] <= target and (idata == 0 or evals[idata - 1, 0] > target), (target, idata, evals[idata, 0])
                 evalsrows[target] = evals[idata, 1:].copy() if copy else evals[idata, 1:]
                 if do_assertion:
-                    assert all((np.isnan(evalsrows[target]) + (
-                        evalsrows[target] == self._detEvals2([target])[0]))), (
-                                    evalsrows[target], self._detEvals2([target])[0])
+                    assert all((np.isnan(evalsrows[target]) + (evalsrows[target] == self._detEvals2([target])[0]))), (
+                        evalsrows[target],
+                        self._detEvals2([target])[0],
+                    )
             if complement_unsuccessful and not append_instances:
                 # appended instances are not necessarily consistent with maxevals,
                 # we would have _maxevals_appended though
@@ -1933,16 +1943,15 @@ class DataSet(object):
                 if np.any(idx):
                     if not copy and not copied:
                         # otherwise we would now change the data in self
-                        evalsrows[target] = evalsrows[target].copy()    
+                        evalsrows[target] = evalsrows[target].copy()
                     evalsrows[target][idx] = (
-                                    complement_unsuccessful(self.maxevals[idx])
-                                        if callable(complement_unsuccessful) else
-                                    complement_unsuccessful * self.maxevals[idx])
+                        complement_unsuccessful(self.maxevals[idx])
+                        if callable(complement_unsuccessful)
+                        else complement_unsuccessful * self.maxevals[idx]
+                    )
         if instance is not None:  # return evals of a single instance only
             if instance not in self.instancenumbers:
-                raise ValueError("instance = {0} not in .instancenumber = {1}"
-                                 " of this DataSet"
-                                 .format(instance, self.instancenumbers))
+                raise ValueError("instance = {0} not in .instancenumber = {1} of this DataSet".format(instance, self.instancenumbers))
             assert len(self.instancenumbers_balanced) == len(evalsrows[target])
             # raw_values=False ==> use instancenumbers_balanced
             # when genericsettings.balance_instances is False then
@@ -1951,9 +1960,16 @@ class DataSet(object):
             for t in evalsrows:
                 evalsrows[t] = evalsrows[t][idx]
         if bootstrap:
-            return [np.asarray(evalsrows[t])[np.random.randint(0,  # asarray looks superfluous
-                                len(evalsrows[t]), len(evalsrows[t]))]
-                    for t in targets]
+            return [
+                np.asarray(evalsrows[t])[
+                    np.random.randint(
+                        0,  # asarray looks superfluous
+                        len(evalsrows[t]),
+                        len(evalsrows[t]),
+                    )
+                ]
+                for t in targets
+            ]
         return [evalsrows[t] for t in targets]  # order w.r.t. input targets
 
     def detEvals_by_instance(self, targets, raw_values=True, **kwargs):
@@ -1970,10 +1986,11 @@ class DataSet(object):
         for i, idx in self.instance_index_lists(raw_values).items():
             res[i] = [evals[idx] for evals in evals_list]
         if len(res) != len(set(self.instancenumbers)):
-            warnings.warn("detEvals_by_instance: len(.detEvals_by_instance(...) = {0}"
-                          " != {1} = len(set(.instancenumbers))"
-                          " which looks like a bug"
-                          .format(len(res), len(set(self.instancenumbers))))
+            warnings.warn(
+                "detEvals_by_instance: len(.detEvals_by_instance(...) = {0} != {1} = len(set(.instancenumbers)) which looks like a bug".format(
+                    len(res), len(set(self.instancenumbers))
+                )
+            )
         return res
 
     def _number_of_better_runs(self, target, ref_eval):
@@ -2004,8 +2021,9 @@ class DataSet(object):
         ref_evals = refalg_dataset.detEvals([target])[0][0]  # first return value is the evals
         evals = self.detEvals([target])[0]
         if len(ref_evals) > 1:
-            warnings.warn('found {} evals data in reference algorithm {}, detEvals([{}])={}'
-                        .format(len(ref_evals), refalg_dataset.algId, target, ref_evals))
+            warnings.warn(
+                "found {} evals data in reference algorithm {}, detEvals([{}])={}".format(len(ref_evals), refalg_dataset.algId, target, ref_evals)
+            )
         ref_evals[~np.isfinite(ref_evals)] = np.inf  # replace nan with inf
         m, a = np.min(ref_evals), np.asarray(evals[np.isfinite(evals)])
         return sum(a < m) + sum(a == m) / 2
@@ -2025,7 +2043,7 @@ class DataSet(object):
             line = advance_iterator(it)
         except StopIteration:
             # evals is an empty array
-            return tmp #list()
+            return tmp  # list()
 
         for t in sorted(targets):
             while line[0] <= t:
@@ -2050,42 +2068,46 @@ class DataSet(object):
         `evals_row` or the numpy view ``self._evals[evals_row, 1:]``.
         Parameter `instance_multipliers` only serves to avoid performance
         side effects from property repeated invokation.
-    """
+        """
         if isinstance(evals_row, int):
-            evals_row = self._evals[evals_row, 1 - first_index:]  # this is a view
+            evals_row = self._evals[evals_row, 1 - first_index :]  # this is a view
         if not self._need_balancing:
             return evals_row
         if instance_multipliers is None:
             instance_multipliers = self.instance_multipliers
-        added = np.hstack([(m - 1) * [evals_row[i + first_index]] for i, m in
-                               enumerate(instance_multipliers) if m > 1])
+        added = np.hstack([(m - 1) * [evals_row[i + first_index]] for i, m in enumerate(instance_multipliers) if m > 1])
         return np.hstack([evals_row, added])
 
     def _update_evals_balanced(self):
         """update attribute `_evals_balanced` if necessary.
-        
+
         The first columns of `_evals_balanced` equal to those of `_evals`
         and further columns are added according to `instance_multipliers` to
         balance uneven repetitions over different instances.
         """
         if 11 < 3 and self.funcId == 3 and self.dim == 40:
             print(self.instance_multipliers)
-            print(self._evals_balanced_raw_data_columns
-                  if hasattr(self, '_evals_balanced_raw_data_columns') else 'blanc')
-        if hasattr(self, '_evals_balanced') and (
-            self._instance_multipliers_instancenumbers == tuple(self.instancenumbers)) and (
-            # self._evals_balanced_instance_numbers == tuple(self.instancenumbers)) and ( # is for some reason not enough
-            self._evals_balanced_raw_data_columns == self._evals.shape[1] - 1 == len(self.instancenumbers)) and (
-            self._need_balancing + (self._evals_balanced is self._evals) == 1):
-                return
+            print(self._evals_balanced_raw_data_columns if hasattr(self, "_evals_balanced_raw_data_columns") else "blanc")
+        if (
+            hasattr(self, "_evals_balanced")
+            and (self._instance_multipliers_instancenumbers == tuple(self.instancenumbers))
+            and (
+                # self._evals_balanced_instance_numbers == tuple(self.instancenumbers)) and ( # is for some reason not enough
+                self._evals_balanced_raw_data_columns == self._evals.shape[1] - 1 == len(self.instancenumbers)
+            )
+            and (self._need_balancing + (self._evals_balanced is self._evals) == 1)
+        ):
+            return
         # print('proceeding')
         self._evals_balanced = self._evals
         instance_multipliers = self.instance_multipliers  # avoid multiple invokation
         if self._need_balancing:
             self._evals_balanced = np.vstack(
-                    [self._balanced_evals_row(self._evals[i, :], first_index=1,
-                                              instance_multipliers=instance_multipliers)
-                     for i in range(self._evals.shape[0])])
+                [
+                    self._balanced_evals_row(self._evals[i, :], first_index=1, instance_multipliers=instance_multipliers)
+                    for i in range(self._evals.shape[0])
+                ]
+            )
         self._evals_balanced_raw_data_columns = len(self.instancenumbers)
         # self._evals_balanced_instance_numbers = tuple(self.instancenumbers)
         # print('done', self._evals.shape, self._evals_balanced.shape, self.instance_multipliers, self.instancenumbers)
@@ -2093,9 +2115,7 @@ class DataSet(object):
     @property
     def _need_balancing(self):
         """return True of gs.balance_instances and self.instance_multipliers are >1"""
-        if not genericsettings.balance_instances or (
-            not hasattr(self, 'instancenumbers') or
-            len(self.instancenumbers) == 0):
+        if not genericsettings.balance_instances or (not hasattr(self, "instancenumbers") or len(self.instancenumbers) == 0):
             return False
         return self.instance_multipliers is not None and set(self.instance_multipliers) != {1}
 
@@ -2105,38 +2125,38 @@ class DataSet(object):
 
         The purpose is to give the same weight to all instances irrespectively of
         their repetitions.
-    """
-        if not hasattr(self, 'instancenumbers'):
-            warnings.warn("DataSet without instancenumbers attribute " +
-                          str((type(self), self.algId, self.funcId, self.dim)))
+        """
+        if not hasattr(self, "instancenumbers"):
+            warnings.warn("DataSet without instancenumbers attribute " + str((type(self), self.algId, self.funcId, self.dim)))
             return None  # 0 would work with np.any(.)
-        if not genericsettings.balance_instances or (
-            isinstance(self.instancenumbers, dict)):  # self.instancenumbers of portfolios is a dict
+        if not genericsettings.balance_instances or (isinstance(self.instancenumbers, dict)):  # self.instancenumbers of portfolios is a dict
             return len(self.instancenumbers) * (1,)
-        if (1 < 3 and  # this failed like
+        if (
+            1 < 3  # this failed like
+            and
             # cocopp/pptable.py", line 219  significancetest(refalgentry, entry, ...
             # cocopp/toolsstats.py", line 806, in significancetest
             # tmp[idx] = -fvalues[j][idx]  # larger data is better
             # IndexError: boolean index did not match indexed array along dimension 0; dimension is 15 but corresponding boolean dimension is 18
-            hasattr(self, '_instance_multipliers_instancenumbers') and
-            getattr(self, '_instance_multipliers_instancenumbers')
-                == tuple(self.instancenumbers)):
+            hasattr(self, "_instance_multipliers_instancenumbers")
+            and getattr(self, "_instance_multipliers_instancenumbers") == tuple(self.instancenumbers)
+        ):
             return self._instance_multipliers  # instancenumbers did not change
         instance_counters = collections.Counter(self.instancenumbers)
-        '''``instance_counters[self.instancenumbers[i]]`` is the
-           counter for self.evals[:, i+1]'''
+        """``instance_counters[self.instancenumbers[i]]`` is the
+           counter for self.evals[:, i+1]"""
         try:
             lcm = np.lcm.reduce(list(instance_counters.values()))  # lowest common multiplier
         except AttributeError:  # old versions of numpy don't know lcm
             lcm = np.prod(list(set(list(instance_counters.values()))))
-        instance_multipliers = tuple(
-                int(lcm / instance_counters[i]) for i in self.instancenumbers)
-        if not hasattr(self, '_instance_multipliers'):  # to prevent lint warning
+        instance_multipliers = tuple(int(lcm / instance_counters[i]) for i in self.instancenumbers)
+        if not hasattr(self, "_instance_multipliers"):  # to prevent lint warning
             self._instance_multipliers = instance_multipliers
-        elif (len(self._instance_multipliers) == len(instance_multipliers) and
-              not self._instance_multipliers == instance_multipliers):
-            warnings.warn("instance multipliers changed (not sure how this can happen)" +
-                          str((self, self.instancenumbers, self._instance_multipliers, instance_multipliers)))
+        elif len(self._instance_multipliers) == len(instance_multipliers) and not self._instance_multipliers == instance_multipliers:
+            warnings.warn(
+                "instance multipliers changed (not sure how this can happen)"
+                + str((self, self.instancenumbers, self._instance_multipliers, instance_multipliers))
+            )
         self._instance_multipliers = instance_multipliers
         self._instance_multipliers_instancenumbers = tuple(self.instancenumbers)  # note on which instances the multipliers are based
         return self._instance_multipliers
@@ -2224,21 +2244,23 @@ class DataSet(object):
         >>> ds.evals_appended.shape
         (14, 6)
 
-    """
-        warnings.warn('''evals_appended is only recently implemented'''
-                      ''' (use "warnings.filterwarnings('ignore', message='evals_appended is only*"'''
-                      ''' to suppress this warning)''')
+        """
+        warnings.warn(
+            """evals_appended is only recently implemented"""
+            ''' (use "warnings.filterwarnings('ignore', message='evals_appended is only*"'''
+            """ to suppress this warning)"""
+        )
         self._evals_appended_compute()
         return self._evals_appended
 
     @property
     def evals_are_appended(self):
-        """return `True` if `self.evals_appended` consist of appended trials (same instances are appended)
-        """
-        return (self._instance_repetitions and
-                len(self.instancenumbers) - self._instance_repetitions
-                        >= genericsettings.appended_evals_minimal_trials and
-                testbedsettings.current_testbed.instances_are_uniform)
+        """return `True` if `self.evals_appended` consist of appended trials (same instances are appended)"""
+        return (
+            self._instance_repetitions
+            and len(self.instancenumbers) - self._instance_repetitions >= genericsettings.appended_evals_minimal_trials
+            and testbedsettings.current_testbed.instances_are_uniform
+        )
 
     def _evals_appended_compute(self):
         """create evals-array with appended instances.
@@ -2282,8 +2304,7 @@ class DataSet(object):
         assert not counts, (self.instancenumbers, counts)  # all instances must be consumed
         assert all([i not in merged_runs for i in [0, evals.shape[1] - 1]]), (self.instancenumbers, merged_runs)
         # remove merged columns
-        evals = evals[:, [i for i in range(evals.shape[1])
-                            if i - 1 not in merged_runs]]
+        evals = evals[:, [i for i in range(evals.shape[1]) if i - 1 not in merged_runs]]
         self._evals_appended = evals
         self._maxevals_appended = np.asarray(maxevals)
         assert sum(self._maxevals) == sum(self._maxevals_appended), (self._maxevals, self._maxevals_appended)
@@ -2320,17 +2341,18 @@ class DataSet(object):
         columns in ``self.evals``.
 
         Target values smaller than ``smallest_target_value`` are not considered.
-        
+
         Details: if two runs have the exact same evaluation profile, they
         are sorted identically, however we could account for final f-values
         which seems only to make sense for ``smallest_target_value<=final_target_value``.
         """
-        idx = self.evals[:,0] >= smallest_target_value
+        idx = self.evals[:, 0] >= smallest_target_value
         if sum(idx) < 2:
-            warnings.warn("DataSet._argsort: the given smallest_target_value=%f covers"
-                          "only %d target(s) (the largest recorded target is %f).\n"
-                          "The first data row contains only 1 as evaluation count by construction."
-                          % (smallest_target_value, sum(idx), self.evals[0, 0]))
+            warnings.warn(
+                "DataSet._argsort: the given smallest_target_value=%f covers"
+                "only %d target(s) (the largest recorded target is %f).\n"
+                "The first data row contains only 1 as evaluation count by construction." % (smallest_target_value, sum(idx), self.evals[0, 0])
+            )
         return 1 + np.lexsort(self.evals[idx, 1:])  # starts from the end and sorts nan last, as if it was designed to sort the evals columns
 
     def plot_funvals(self, **kwargs):
@@ -2340,37 +2362,37 @@ class DataSet(object):
               using "isfinite" instead of "np.isfinite" and is not called
               from anywhere)
         """
-        kwargs.setdefault('clip_on', False)
+        kwargs.setdefault("clip_on", False)
         for funvals in self.funvals.T[1:]:  # loop over the rows of the transposed array
             idx = np.isfinite(funvals > 1e-19)
             plt.loglog(self.funvals[idx, 0], funvals[idx], **kwargs)
-            plt.ylabel(r'target $\Delta f$ value')
-            plt.xlabel('number of function evaluations')
+            plt.ylabel(r"target $\Delta f$ value")
+            plt.xlabel("number of function evaluations")
             plt.xlim(1, max(self.maxevals))
         return plt.gca()
 
     def _old_plot(self, **kwargs):
         """plot data from `evals` attribute.
 
-        `**kwargs` is passed to `matplolib.loglog`. 
-        
+        `**kwargs` is passed to `matplolib.loglog`.
+
         TODO: seems outdated on 19/8/2016
         ("np.isfinite" was "isfinite" hence raising an error)
         """
-        kwargs.setdefault('clip_on', False)
+        kwargs.setdefault("clip_on", False)
         for evals in self.evals.T[1:]:  # loop over the rows of the transposed array
             idx = np.logical_and(self.evals[:, 0] > 1e-19, np.isfinite(evals))
             # plt.semilogx(self.evals[idx, 0], evals[idx])
             if 1 < 3:
                 plt.loglog(evals[idx], self.evals[idx, 0], **kwargs)
-                plt.ylabel(r'target $\Delta f$ value')
-                plt.xlabel('number of function evaluations')
+                plt.ylabel(r"target $\Delta f$ value")
+                plt.xlabel("number of function evaluations")
                 plt.xlim(1, max(self.maxevals))
             else:  # old version
                 plt.loglog(self.evals[idx, 0], evals[idx])
                 plt.gca().invert_xaxis()
-                plt.xlabel(r'target $\Delta f$ value')
-                plt.ylabel('number of function evaluations')
+                plt.xlabel(r"target $\Delta f$ value")
+                plt.ylabel("number of function evaluations")
         return plt.gca()
 
     def median_evals(self, target_values=None, append_instances=True):
@@ -2412,8 +2434,7 @@ class DataSet(object):
         m[~np.isfinite(m)] = np.nan
         return m
 
-    def percentiles(self, target_values, prctiles=(5, 25, 50, 75, 95),
-                    instances_are_uniform=None):
+    def percentiles(self, target_values, prctiles=(5, 25, 50, 75, 95), instances_are_uniform=None):
         """return the evaluations percentiles for each target in `target_values`.
 
         Unsuccessful runs are indicated with `np.nan` and always sorted to
@@ -2464,15 +2485,15 @@ class DataSet(object):
                     "\n has not been set, hence the correct value for"
                     "\n `instances_are_uniform` could not be inferred."
                     "\nUse ``instances_are_uniform=False`` for multiobjective"
-                    "\n performance data and `True` otherwise.")
+                    "\n performance data and `True` otherwise."
+                )
             instances_are_uniform = testbedsettings.current_testbed.instances_are_uniform
-        evals = self.evals_with_simulated_restarts(target_values,
-                        samplesize='individual',
-                        instances_are_uniform=instances_are_uniform)
+        evals = self.evals_with_simulated_restarts(target_values, samplesize="individual", instances_are_uniform=instances_are_uniform)
+
         def scalarize(res):
             return res[0] if np.isscalar(prctiles) else res
-        return [scalarize(toolsstats.prctile(ev, prctiles, ignore_nan=False))
-                for ev in evals]
+
+        return [scalarize(toolsstats.prctile(ev, prctiles, ignore_nan=False)) for ev in evals]
 
     def instance_index_lists(self, raw_values=True):
         """return `OrderedDict` of index lists for each instance.
@@ -2491,8 +2512,7 @@ class DataSet(object):
         with 1.
         """
         res = collections.OrderedDict()
-        for index, i in enumerate(self.instancenumbers if raw_values
-                                  else self.instancenumbers_balanced):
+        for index, i in enumerate(self.instancenumbers if raw_values else self.instancenumbers_balanced):
             if i not in res:
                 res[i] = []  # initialize
             res[i] += [index]
@@ -2524,8 +2544,7 @@ class DataSet(object):
         res = collections.OrderedDict()
         successes = self.successes_by_instance()
         for instance, indices in self.instance_index_lists(raw_values=True).items():
-            res[instance] = sum(self.maxevals[i] for i in indices
-                                ) / max((1, successes[instance]))
+            res[instance] = sum(self.maxevals[i] for i in indices) / max((1, successes[instance]))
         return res
 
     def successes_by_instance(self, target=None, raw_values=True):
@@ -2550,21 +2569,25 @@ class DataSet(object):
 
         in the leading columns of the `_evals` attribute.
         """
+
         def nanequal(a, b):
-            try: return np.array_equal(a, b, equal_nan=True)  # since 1.19 (2020)
-            except AttributeError: return np.all((a == b) | (np.isnan(a) & np.isnan(b)))
+            try:
+                return np.array_equal(a, b, equal_nan=True)  # since 1.19 (2020)
+            except AttributeError:
+                return np.all((a == b) | (np.isnan(a) & np.isnan(b)))
+
         targets = sorted(set.union(set(self._evals[:, 0]), set(ds._evals[:, 0])))
         if not targets:
             return []
-        differ = [not nanequal(row_s[:ds._evals.shape[1]-1],
-                               row_ds[:self._evals.shape[1]-1])
-                    for (row_s, row_ds) in zip(self.detEvals(targets),
-                                               ds.detEvals(targets))]
+        differ = [
+            not nanequal(row_s[: ds._evals.shape[1] - 1], row_ds[: self._evals.shape[1] - 1])
+            for (row_s, row_ds) in zip(self.detEvals(targets), ds.detEvals(targets))
+        ]
         return [t for (t, d) in zip(targets, differ) if d]
 
-    def plot(self, plot_function=plt.semilogy, smallest_target=8e-9,
-             median_formats=(('linestyle', '--'), ), color_map=None,
-             plot_formats=(), **plot_kwargs):
+    def plot(
+        self, plot_function=plt.semilogy, smallest_target=8e-9, median_formats=(("linestyle", "--"),), color_map=None, plot_formats=(), **plot_kwargs
+    ):
         """plot all data from `evals` attribute and the median.
 
         Plotted are Delta f-value vs evaluations. The sort for the color
@@ -2583,48 +2606,50 @@ class DataSet(object):
         the final/smallest target.
         """
         if smallest_target > self.evals[0, 0]:
-            raise ValueError("smallest_target=%f argument is larger than the largest recorded target %f"
-                % (smallest_target, self.evals[0, 0]))
+            raise ValueError("smallest_target=%f argument is larger than the largest recorded target %f" % (smallest_target, self.evals[0, 0]))
         plot_kwargs.update(plot_formats)
         median_kwargs = dict(median_formats)
-        plot_kwargs.setdefault('clip_on', False)  # doesn't help
-        plot_kwargs.setdefault('linewidth', 0.5)
-        plot_kwargs.setdefault('marker', '.')
-        plot_kwargs.setdefault('markersize', 2)
-        colors = None if 'color' in plot_kwargs else (
-            iter(color_map or plt.cm.brg(np.linspace(0, 0.5, self.nbRuns()))))
+        plot_kwargs.setdefault("clip_on", False)  # doesn't help
+        plot_kwargs.setdefault("linewidth", 0.5)
+        plot_kwargs.setdefault("marker", ".")
+        plot_kwargs.setdefault("markersize", 2)
+        colors = None if "color" in plot_kwargs else (iter(color_map or plt.cm.brg(np.linspace(0, 0.5, self.nbRuns()))))
         #   iter(plt.cm.plasma(np.linspace(0, 0.7, self.nbRuns()))))
-        median_kwargs.setdefault('color', plot_kwargs.get('color', 'black'))
+        median_kwargs.setdefault("color", plot_kwargs.get("color", "black"))
         # max_plotted_eval = np.nanmax(self.evals[:,1:])
         final_evals = self.detEvals([np.max([self.precision, smallest_target])])[0]
         for i in self._argsort(smallest_target):  # ranges from 1 to nbRuns included
             evals = self.evals.T[i]  # i == 0 are the target values
-            idx = np.logical_and(self.evals[:, 0] >= smallest_target,
-                                 np.isfinite(evals))
+            idx = np.logical_and(self.evals[:, 0] >= smallest_target, np.isfinite(evals))
             if colors:
-                plot_kwargs['color'] = next(colors)
+                plot_kwargs["color"] = next(colors)
             plot_function(evals[idx], self.evals[idx, 0], **plot_kwargs)
-            if not np.isfinite(final_evals[i-1]):
-                plot_function(self.maxevals[i-1],  # max_plotted_eval
-                              # self.evals[sum(np.isfinite(self.evals[:, i])) - 1, 0],
-                              self.funvals[-1, i],
-                              '.', color=plot_kwargs['color'], markersize=1.5)
+            if not np.isfinite(final_evals[i - 1]):
+                plot_function(
+                    self.maxevals[i - 1],  # max_plotted_eval
+                    # self.evals[sum(np.isfinite(self.evals[:, i])) - 1, 0],
+                    self.funvals[-1, i],
+                    ".",
+                    color=plot_kwargs["color"],
+                    markersize=1.5,
+                )
         # plot median
         xmedian = self.median_evals()
         idx = np.logical_and(self.evals[:, 0] >= smallest_target, np.isfinite(xmedian))
         assert np.any(idx)  # must always be true, because the first row of evals is always finite
-        median_kwargs.setdefault('linewidth', plot_kwargs['linewidth'] + 1)
+        median_kwargs.setdefault("linewidth", plot_kwargs["linewidth"] + 1)
         plot_function(xmedian[idx], self.evals[idx, 0], **median_kwargs)
         i = np.where(idx)[0][-1]  # mark the last median with a circle
-        plot_function(xmedian[i], self.evals[i, 0], 'o', **median_kwargs)
+        plot_function(xmedian[i], self.evals[i, 0], "o", **median_kwargs)
         # make labels and beautify
-        plt.ylabel(r'$\Delta f$')
-        plt.xlabel('function evaluations')
+        plt.ylabel(r"$\Delta f$")
+        plt.xlabel("function evaluations")
         plt.xlim(left=0.85)  # right=max(self.maxevals)
         plt.ylim(bottom=smallest_target if smallest_target is not None else self.precision)
         plt.title("%s: F%d in dimension %d" % (self.algId[:33], self.funcId, self.dim))
         plt.grid(True)
         return plt.gca()  # not sure which makes most sense
+
 
 def get_DataSetList(*args, **kwargs):
     """try to load pickle file or fall back to `DataSetList` constructor.
@@ -2637,17 +2662,17 @@ def get_DataSetList(*args, **kwargs):
     repository filetype name or the name itself. Otherwise, the fallback is
     executed.
     """
-    extension = '.pickle'
+    extension = ".pickle"
+
     def fallback():
         return DataSetList(*args, **kwargs)
+
     if len(args) != 1 or len(kwargs) or sys.version_info[0] < 3:
         return fallback()
     arg1 = args[0]
     if isinstance(arg1, string_types):
         arg1 = [arg1]
-    if (len(args) != 1 or
-        not isinstance(arg1[0], string_types) or
-        not findfiles.is_recognized_repository_filetype2(arg1[0])):
+    if len(args) != 1 or not isinstance(arg1[0], string_types) or not findfiles.is_recognized_repository_filetype2(arg1[0]):
         return fallback()
     try:
         import pickle
@@ -2656,22 +2681,20 @@ def get_DataSetList(*args, **kwargs):
     name = arg1[0] + extension
     if os.path.exists(name) and os.path.getmtime(name) > os.path.getmtime(arg1[0]):
         if _using_recommendations:
-            warnings.warn('pickled DataSetLists do currently NOT have recommendations,'
-                        '\n hence the file {} is not used'.format(name))
+            warnings.warn("pickled DataSetLists do currently NOT have recommendations,\n hence the file {} is not used".format(name))
             return fallback()
         try:
             with open(name, "rb") as f:
                 dsl = pickle.load(f)
         except Exception as e:
-            warnings.warn("failed to load pickle file {} with exception {}"
-                          .format(name, e))
+            warnings.warn("failed to load pickle file {} with exception {}".format(name, e))
         else:
             if isinstance(dsl, DataSetList):  # found valid pickle file
                 # to be compatible with DataSet.__init__:
                 if not testbedsettings.current_testbed:
                     testbedsettings.load_current_testbed(dsl[0].suite_name, TargetValues)
                 if genericsettings.verbose > 0:
-                    print("  using pickled DataSetList {0}".format(name), end=' ')
+                    print("  using pickled DataSetList {0}".format(name), end=" ")
                 return dsl
     if _using_recommendations:  # do not pickle recommendations for the time being
         return fallback()
@@ -2680,9 +2703,9 @@ def get_DataSetList(*args, **kwargs):
         with open(name, "wb") as f:
             pickle.dump(dsl, f)
     except Exception as e:
-        warnings.warn("could not write pickle file {} getting exception {}"
-                    .format(name, e))
+        warnings.warn("could not write pickle file {} getting exception {}".format(name, e))
     return dsl
+
 
 class DataSetList(list):
     """List of instances of :py:class:`DataSet`.
@@ -2693,11 +2716,12 @@ class DataSetList(list):
     (according to function __eq__ of DataSet).
 
     """
-    #Do not inherit from set because DataSet instances are mutable which means
-    #they might change over time.
+
+    # Do not inherit from set because DataSet instances are mutable which means
+    # they might change over time.
 
     def __init__(self, args=[], check_data_type=True):
-        """Instantiate self from a list of folder- or filenames or 
+        """Instantiate self from a list of folder- or filenames or
         ``DataSet`` instances.
 
         :keyword list args: strings being either info file names, folder
@@ -2710,7 +2734,6 @@ class DataSetList(list):
 
         """
 
-
         if not args:
             super(DataSetList, self).__init__()
             return
@@ -2718,8 +2741,7 @@ class DataSetList(list):
         if isinstance(args, string_types):
             args = [args]
 
-        if len(args) and (isinstance(args[0], DataSet) or
-                not check_data_type and hasattr(args[0], 'algId')):
+        if len(args) and (isinstance(args[0], DataSet) or not check_data_type and hasattr(args[0], "algId")):
             # TODO: loaded instances are not DataSets but
             # ``or hasattr(args[0], 'algId')`` fails in self.append
             # initialize a DataSetList from a sequence of DataSet
@@ -2727,9 +2749,8 @@ class DataSetList(list):
                 self.append(ds, check_data_type)
             return
 
-        if hasattr(args[0], 'algId'):
-            print('try calling DataSetList() with option ' +
-                  '``check_data_type=False``')
+        if hasattr(args[0], "algId"):
+            print("try calling DataSetList() with option " + "``check_data_type=False``")
         fnames = []  # data file names
         alg_names = []  # may be the same algorithm name for (many) different fnames
         for name in args:
@@ -2744,28 +2765,28 @@ class DataSetList(list):
             if isinstance(name, DataSet):
                 self.append(name)
                 # we could check here whether name.algId and alg_name are similar or consistent
-            elif name.endswith('.info'):
+            elif name.endswith(".info"):
                 self.processIndexFile(name, alg_name)
-            elif name.endswith('.pickle') or name.endswith('.pickle.gz'):
+            elif name.endswith(".pickle") or name.endswith(".pickle.gz"):
                 if _using_recommendations:
                     warnings.warn(
                         "ignoring an unexpected _using_recommendations={} setting,\n"
                         "using the pickle file {} generally requires to set ``cocopp."
-                        "genericsettings.use_recommendations[{}] to `False`"
-                        .format(_using_recommendations, name, fnames.index(name)))
+                        "genericsettings.use_recommendations[{}] to `False`".format(_using_recommendations, name, fnames.index(name))
+                    )
                 try:
                     # cocofy(name)
-                    if name.endswith('.gz'):
+                    if name.endswith(".gz"):
                         f = gzip.open(name)
                     else:
-                        f = open(name,'r')
+                        f = open(name, "r")
                     try:
                         entry = pickle.load(f)
                     except pickle.UnpicklingError:
-                        print('%s could not be unpickled.' %(name))
+                        print("%s could not be unpickled." % (name))
                     f.close()
                     if genericsettings.verbose > 1:
-                        print('Unpickled %s.' % (name))
+                        print("Unpickled %s." % (name))
                     try:
                         entry.instancenumbers = entry.itrials  # has been renamed
                         del entry.itrials
@@ -2773,29 +2794,33 @@ class DataSetList(list):
                         pass
                     # if not hasattr(entry, 'detAverageEvals')
                     self.append(entry)
-                    #set_trace()
+                    # set_trace()
                 except IOError as e:
                     print("I/O error(%s): %s" % (e.errno, e.strerror))
             else:
-                s = ('File or folder ' + name + ' not found. ' +
-                              'Expecting as input argument either .info ' +
-                              'file(s), .pickle file(s) or a folder ' +
-                              'containing .info file(s).')
+                s = (
+                    "File or folder "
+                    + name
+                    + " not found. "
+                    + "Expecting as input argument either .info "
+                    + "file(s), .pickle file(s) or a folder "
+                    + "containing .info file(s)."
+                )
                 warnings.warn(s)
                 print(s)
         self.sort()
-        self.current_testbed = testbedsettings.current_testbed #Wassim: to be sure
+        self.current_testbed = testbedsettings.current_testbed  # Wassim: to be sure
         data_consistent = True
         for ds in self:
             data_consistent = data_consistent and ds.consistency_check()
         if len(self) and data_consistent:
             if genericsettings.warning_level >= 1:
                 print("  Data consistent according to consistency_check() in pproc.DataSet")
-            
+
     def processIndexFile(self, indexFile, alg_name=None):
         """Reads in an index (.info?) file information on the different runs."""
 
-        if alg_name.endswith('.info'):
+        if alg_name.endswith(".info"):
             alg_name = None
         elif alg_name is not None:
             # algId from data files is usually not set properly, so here we overwrite
@@ -2810,90 +2835,99 @@ class DataSetList(list):
 
             alg_name = toolsdivers.strip_pathname1(alg_name)
             if archiving.official_archives.bbob.find(alg_name):
-                alg_name = alg_name.replace('noiseless', '').rstrip('_').rstrip()
+                alg_name = alg_name.replace("noiseless", "").rstrip("_").rstrip()
             if 11 < 3:  # would break searching of algId in archives
                 alg_name = toolsdivers.str_to_latex(alg_name)  # not really necessary but ' ' seems nicer than '_'
         try:
-            with openfile(indexFile, errors='replace') as f:  # strange chars in names may cause errors
+            with openfile(indexFile, errors="replace") as f:  # strange chars in names may cause errors
                 if genericsettings.verbose:
-                    print('Processing %s.' % indexFile)
+                    print("Processing %s." % indexFile)
 
                 # Read all data sets within one index file.
                 nbLine = 1
                 data_file_names = []
-                header = ''
+                header = ""
                 while True:
                     try:
-                        if 'indicator' not in header:
+                        if "indicator" not in header:
                             header = advance_iterator(f)
-                            while not header.strip(): # remove blank lines
+                            while not header.strip():  # remove blank lines
                                 header = advance_iterator(f)
                                 nbLine += 1
                             comment = advance_iterator(f)
-                            if not comment.startswith('%'):
-                                warnings.warn('Entry in file %s at line %d is faulty: '
-                                            % (indexFile, nbLine) +
-                                            'it will be skipped.')
+                            if not comment.startswith("%"):
+                                warnings.warn("Entry in file %s at line %d is faulty: " % (indexFile, nbLine) + "it will be skipped.")
                                 nbLine += 2
                                 continue
 
                         data = advance_iterator(f)  # this is the filename of the data file!?
                         data_file_names.append(data)
                         nbLine += 3
-                        #TODO: check that something is not wrong with the 3 lines.
+                        # TODO: check that something is not wrong with the 3 lines.
                         ds = DataSet(header, comment, data, indexFile)
                         # data extension may have been modified to .mdat
                         if alg_name is not None:
                             ds.algId = alg_name
-                        if len(ds.instancenumbers) > 0:                    
+                        if len(ds.instancenumbers) > 0:
                             self.append(ds)
                     except StopIteration:
                         break
             if len(data_file_names) != len(set(data_file_names)):
-                warnings.warn("WARNING: a data file has been referenced" +
-                    " several times in file %s:" % indexFile)
+                warnings.warn("WARNING: a data file has been referenced" + " several times in file %s:" % indexFile)
                 data_file_names = sorted(data_file_names)
                 for i in range(1, len(data_file_names)):
-                    if data_file_names[i-1] == data_file_names[i]:
+                    if data_file_names[i - 1] == data_file_names[i]:
                         warnings.warn("    data file " + data_file_names[i])
                 warnings.warn("  This is likely to produce spurious results.")
 
         except IOError as e:
             print('Could not load "%s".' % indexFile)
-            print('I/O error(%s): %s' % (e.errno, e.strerror))
+            print("I/O error(%s): %s" % (e.errno, e.strerror))
 
-    def append(self, o, check_data_type='warn'):
+    def append(self, o, check_data_type="warn"):
         """Redefines the append method to check for unicity."""
 
         if check_data_type and not isinstance(o, DataSet):
-            warnings.warn('appending a non-DataSet {} to a DataSetList'.format(o))
-            if check_data_type != 'warn':
-                raise ValueError('Expect DataSet instance.')
+            warnings.warn("appending a non-DataSet {} to a DataSetList".format(o))
+            if check_data_type != "warn":
+                raise ValueError("Expect DataSet instance.")
         isFound = False
         for i in self:
             if i == o:
                 isFound = True
-                if 1 < 3 and i.instancenumbers == o.instancenumbers and (
-                    # max(i.instancenumbers) > 5 and
-                    not i._data_differ(o)):
-                    warnings.warn("same DataSet with {0} rows found twice," 
-                                  .format(len(o._evals))
-                                  + " skipping the second one from "
-                                  + str(o.indexFiles) + " with instances "
-                                  + str(i.instancenumbers))
+                if (
+                    1 < 3
+                    and i.instancenumbers == o.instancenumbers
+                    and (
+                        # max(i.instancenumbers) > 5 and
+                        not i._data_differ(o)
+                    )
+                ):
+                    warnings.warn(
+                        "same DataSet with {0} rows found twice,".format(len(o._evals))
+                        + " skipping the second one from "
+                        + str(o.indexFiles)
+                        + " with instances "
+                        + str(i.instancenumbers)
+                    )
                     # todo: this check should be done in a
                     #       consistency checking method, as the one below
                     break
                 # replaced by i.consisency_check() below
-                if 11 < 3 and set(i.instancenumbers).intersection(o.instancenumbers) \
-                        and any([_i > 5 for _i in set(i.instancenumbers).intersection(o.instancenumbers)]):
-                    warn_message = ('in DataSetList.processIndexFile: instances '
-                                    + str(set(i.instancenumbers).intersection(o.instancenumbers))
-                                    + ' found several times.'
-                                    + ' Read data for F%d in %d-D of %s might be inconsistent' % (i.funcId, i.dim, i.algId))
+                if (
+                    11 < 3
+                    and set(i.instancenumbers).intersection(o.instancenumbers)
+                    and any([_i > 5 for _i in set(i.instancenumbers).intersection(o.instancenumbers)])
+                ):
+                    warn_message = (
+                        "in DataSetList.processIndexFile: instances "
+                        + str(set(i.instancenumbers).intersection(o.instancenumbers))
+                        + " found several times."
+                        + " Read data for F%d in %d-D of %s might be inconsistent" % (i.funcId, i.dim, i.algId)
+                    )
                     warnings.warn(warn_message)
                 # tmp = set(i.dataFiles).symmetric_difference(set(o.dataFiles))
-                #Check if there are new data considered.
+                # Check if there are new data considered.
                 if 1 < 3:
                     i.dataFiles.extend(o.dataFiles)
                     i.indexFiles.extend(o.indexFiles)
@@ -2903,7 +2937,7 @@ class DataSetList(list):
                     i._maxevals = numpy.r_[i._maxevals, o._maxevals]
                     # i.computeERTfromEvals()  # breaks with constrained testbed and there is no need to do this now as .ert is now a property
                     i.reference_values.update(o.reference_values)
-                    if getattr(i, 'pickleFile', False):
+                    if getattr(i, "pickleFile", False):
                         i.modsFromPickleVersion = True
 
                     for name in i.__dict__:  # was: dir(i) which catches all properties
@@ -2911,9 +2945,9 @@ class DataSetList(list):
                             getattr(i, name).extend(getattr(o, name))
 
                 else:
-                    if getattr(i, 'pickleFile', False):
+                    if getattr(i, "pickleFile", False):
                         i.modsFromPickleVersion = False
-                    elif getattr(o, 'pickleFile', False):
+                    elif getattr(o, "pickleFile", False):
                         i.modsFromPickleVersion = False
                         i.pickleFile = o.pickleFile
                 # if not i.consistency_check():  # might not be consistent here, but is (should be) checked in the end
@@ -2955,9 +2989,10 @@ class DataSetList(list):
             if not condition(self[i]):
                 removed += [self.pop(i)]
         if verbose in [1, 3]:
-            print('  {0} DataSets removed'.format(len(removed)))
+            print("  {0} DataSets removed".format(len(removed)))
         if verbose in [2, 3]:
             return removed
+
     def remove_if(self, condition):
         """discard DataSets for which ``condition(self[i])`` is true.
 
@@ -2965,10 +3000,13 @@ class DataSetList(list):
         ds.funcId in [1, 5]`` which is equivalent with calling
         ``.filter(lambda ds: ds.funcId not in [1, 5])``.
         """
+
         def inverted_condition(ds):
             return not condition(ds)
+
         self.filter(inverted_condition)
-    def filtered(self, condition, type_='DataSetList'):
+
+    def filtered(self, condition, type_="DataSetList"):
         """return a `list` of `DataSet` for which ``condition(dataset)`` holds.
 
         For example, ``condition=lambda ds: ds.funcId in [1, 2] +
@@ -2989,7 +3027,7 @@ class DataSetList(list):
             res = [ds for ds in self]
         else:
             res = [self[i] for i in range(len(self)) if condition(self[i])]
-        return DataSetList(res) if type_ == 'DataSetList' else res
+        return DataSetList(res) if type_ == "DataSetList" else res
 
     def pickle(self, *args, **kwargs):
         """Loop over self to pickle each element, not in use (anymore)."""
@@ -3019,7 +3057,7 @@ class DataSetList(list):
         """
         d = DictAlg()
         for i in self:
-            d.setdefault((i.algId, ''), DataSetList()).append(i)
+            d.setdefault((i.algId, ""), DataSetList()).append(i)
         return d
 
     def dictByAlgName(self):
@@ -3077,16 +3115,16 @@ class DataSetList(list):
                     d.setdefault(group_name, DataSetList()).append(i)
                     found = True
             if not found:
-                warnings.warn('Unknown function id: %s' % i.funcId)
+                warnings.warn("Unknown function id: %s" % i.funcId)
         return d
 
     def dictByDimFunc(self):
-        """Returns a dictionary of instances of this class 
+        """Returns a dictionary of instances of this class
         by dimensions and for each dimension by function.
 
         Returns a dictionary with dimension as keys and the
         corresponding slices as values.
-        
+
             ds = dsl.dictByDimFunc[40][2]  # DataSet dimension 40 on F2
 
         """
@@ -3094,40 +3132,39 @@ class DataSetList(list):
         for k in dsld:
             dsld[k] = dsld[k].dictByFunc()
         return dsld
-        
+
     def dictByNoise(self):
         """Returns a dictionary splitting noisy and non-noisy entries."""
         sorted = {}
-        
+
         for i in self:
             if i.funcId in range(1, 93):
-                sorted.setdefault('noiselessall', DataSetList()).append(i)
+                sorted.setdefault("noiselessall", DataSetList()).append(i)
             elif i.funcId in range(101, 131):
-                sorted.setdefault('nzall', DataSetList()).append(i)
+                sorted.setdefault("nzall", DataSetList()).append(i)
             else:
-                warnings.warn('Unknown function id.')
+                warnings.warn("Unknown function id.")
 
         return sorted
 
     def isBiobjective(self):
         return any(i.isBiobjective() for i in self)
 
-        
     def dictByFuncGroupBiobjective(self):
         """Returns a dictionary of instances of this class by function groups
         for bi-objective case.
 
         The output dictionary has function group names as keys and the
-        corresponding slices as values. 
+        corresponding slices as values.
 
         """
-        sorted = {} 
+        sorted = {}
         for i in self:
-            key = getattr(i, 'folder', '')
+            key = getattr(i, "folder", "")
             if key:
                 sorted.setdefault(key, DataSetList()).append(i)
             else:
-                warnings.warn('Unknown group name.')
+                warnings.warn("Unknown group name.")
 
         return sorted
 
@@ -3142,51 +3179,49 @@ class DataSetList(list):
         res = {}
 
         # TODO: this should be done in the testbed, not here
-        if testbedsettings.current_testbed.name == 'bbob-constrained':
+        if testbedsettings.current_testbed.name == "bbob-constrained":
             for i in self:
                 n_constraints = testbedsettings.current_testbed.constraint_category(i.funcId)
                 res.setdefault(  #  splitting only by n of constraints
-                    'all m=' + n_constraints, DataSetList()).append(i)
+                    "all m=" + n_constraints, DataSetList()
+                ).append(i)
                 # splitting by n of constraints and function class
                 if i.funcId in range(1, 19):
-                    res.setdefault(
-                        'separ m=' + n_constraints, DataSetList()).append(i)
+                    res.setdefault("separ m=" + n_constraints, DataSetList()).append(i)
                 elif i.funcId in range(19, 43):
-                    res.setdefault(
-                        'hcond m=' + n_constraints, DataSetList()).append(i)
+                    res.setdefault("hcond m=" + n_constraints, DataSetList()).append(i)
                 elif i.funcId in range(43, 55):
-                    res.setdefault(
-                        'multi m=' + n_constraints, DataSetList()).append(i)
+                    res.setdefault("multi m=" + n_constraints, DataSetList()).append(i)
                 else:
-                    warnings.warn('Unknown function id.')
+                    warnings.warn("Unknown function id.")
         else:
             for i in self:
                 if i.funcId in range(1, 6):
-                    res.setdefault('separ', DataSetList()).append(i)
+                    res.setdefault("separ", DataSetList()).append(i)
                 elif i.funcId in range(6, 10):
-                    res.setdefault('lcond', DataSetList()).append(i)
+                    res.setdefault("lcond", DataSetList()).append(i)
                 elif i.funcId in range(10, 15):
-                    res.setdefault('hcond', DataSetList()).append(i)
+                    res.setdefault("hcond", DataSetList()).append(i)
                 elif i.funcId in range(15, 20):
-                    res.setdefault('multi', DataSetList()).append(i)
+                    res.setdefault("multi", DataSetList()).append(i)
                 elif i.funcId in range(20, 25):
-                    res.setdefault('mult2', DataSetList()).append(i)
+                    res.setdefault("mult2", DataSetList()).append(i)
                 elif i.funcId in range(101, 107):
-                    res.setdefault('nzmod', DataSetList()).append(i)
+                    res.setdefault("nzmod", DataSetList()).append(i)
                 elif i.funcId in range(107, 122):
-                    res.setdefault('nzsev', DataSetList()).append(i)
+                    res.setdefault("nzsev", DataSetList()).append(i)
                 elif i.funcId in range(122, 131):
-                    res.setdefault('nzsmm', DataSetList()).append(i)
+                    res.setdefault("nzsmm", DataSetList()).append(i)
                 else:
-                    warnings.warn('Unknown function id.')
-                    
+                    warnings.warn("Unknown function id.")
+
         return res
 
     def dictByFuncGroup(self):
         """Returns a dictionary of instances of this class by function groups.
 
         The output dictionary has function group names as keys and the
-        corresponding slices as values.  
+        corresponding slices as values.
 
         """
         if self.isBiobjective():
@@ -3196,57 +3231,47 @@ class DataSetList(list):
 
     def getFuncGroups(self):
         """Returns a dictionary of function groups.
-        
-        The output dictionary has functions group names as keys 
+
+        The output dictionary has functions group names as keys
         and function group descriptions as values.
         """
         if self.isBiobjective():
             dictByFuncGroup = self.dictByFuncGroupBiobjective()
-            groups = OrderedDict(sorted((key, key.replace('_', ' ')) for key in dictByFuncGroup.keys()))
+            groups = OrderedDict(sorted((key, key.replace("_", " ")) for key in dictByFuncGroup.keys()))
             return groups
-        elif testbedsettings.current_testbed.name == 'bbob-constrained':
+        elif testbedsettings.current_testbed.name == "bbob-constrained":
             groups = []
             for i in self:
                 n_constraints = testbedsettings.current_testbed.constraint_category(i.funcId)
                 n_cons_dim = testbedsettings.current_testbed.number_of_constraints(i.dim, i.funcId)
-                groups.append(
-                    (3, n_cons_dim,
-                     ('all m=' + n_constraints,
-                     'All functions with ' + n_constraints + ' constraints')))
+                groups.append((3, n_cons_dim, ("all m=" + n_constraints, "All functions with " + n_constraints + " constraints")))
                 if i.funcId in range(1, 19):
-                    groups.append( # first two entries are for sorting only, dropped later
-                        (0, n_cons_dim,
-                         ('separ m=' + n_constraints,
-                         'Separable functions with ' + n_constraints + ' constraints')))
+                    groups.append(  # first two entries are for sorting only, dropped later
+                        (0, n_cons_dim, ("separ m=" + n_constraints, "Separable functions with " + n_constraints + " constraints"))
+                    )
                 elif i.funcId in range(19, 43):
-                    groups.append(
-                        (1, n_cons_dim,
-                         ('hcond m=' + n_constraints,
-                         'Ill-conditioned functions with ' + n_constraints + ' constraints')))
+                    groups.append((1, n_cons_dim, ("hcond m=" + n_constraints, "Ill-conditioned functions with " + n_constraints + " constraints")))
                 elif any(i.funcId in range(43, 55) for i in self):
-                    groups.append(
-                        (2, n_cons_dim,
-                         ('multi m=' + n_constraints,
-                         'Multi-modal functions with ' + n_constraints + ' constraints')))
+                    groups.append((2, n_cons_dim, ("multi m=" + n_constraints, "Multi-modal functions with " + n_constraints + " constraints")))
             return OrderedDict([_[-1] for _ in sorted(groups)])  # remove duplicates, keep order
         else:
             groups = []
             if any(i.funcId in range(1, 6) for i in self):
-                groups.append(('separ', 'Separable functions'))
+                groups.append(("separ", "Separable functions"))
             if any(i.funcId in range(6, 10) for i in self):
-                groups.append(('lcond', 'Misc. moderate functions'))
+                groups.append(("lcond", "Misc. moderate functions"))
             if any(i.funcId in range(10, 15) for i in self):
-                groups.append(('hcond', 'Ill-conditioned functions'))
+                groups.append(("hcond", "Ill-conditioned functions"))
             if any(i.funcId in range(15, 20) for i in self):
-                groups.append(('multi', 'Multi-modal functions'))
+                groups.append(("multi", "Multi-modal functions"))
             if any(i.funcId in range(20, 25) for i in self):
-                groups.append(('mult2', 'Weak structure functions'))
+                groups.append(("mult2", "Weak structure functions"))
             if any(i.funcId in range(101, 107) for i in self):
-                groups.append(('nzmod', 'Moderate noise'))
+                groups.append(("nzmod", "Moderate noise"))
             if any(i.funcId in range(107, 122) for i in self):
-                groups.append(('nzsev', 'Severe noise'))
+                groups.append(("nzsev", "Severe noise"))
             if any(i.funcId in range(122, 131) for i in self):
-                groups.append(('nzsmm', 'Severe noise multimod.'))
+                groups.append(("nzsmm", "Severe noise multimod."))
 
             return OrderedDict(groups)
 
@@ -3270,84 +3295,87 @@ class DataSetList(list):
                              (default), 'short'
 
         """
-        #TODO: do not integrate over dimension!!!
+        # TODO: do not integrate over dimension!!!
         #      loop over all data sets!?
 
         if len(self) > 0:
-            print('%d data set(s)' % (len(self)))
+            print("%d data set(s)" % (len(self)))
             dictAlg = self.dictByAlg()
             algs = sorted(dictAlg.keys())
-            sys.stdout.write('Algorithm(s): %s' % (algs[0][0]))
+            sys.stdout.write("Algorithm(s): %s" % (algs[0][0]))
             for i in range(1, len(algs)):
-                sys.stdout.write(', %s' % (algs[0][0]))
-            sys.stdout.write('\n')
+                sys.stdout.write(", %s" % (algs[0][0]))
+            sys.stdout.write("\n")
 
             dictFun = self.dictByFunc()
             functions = sorted(dictFun.keys())
             nbfuns = len(set(functions))
-            splural = 's' if nbfuns > 1 else ''
-            print('%d Function%s with ID%s %s' % (nbfuns, splural, splural, consecutiveNumbers(functions)))
+            splural = "s" if nbfuns > 1 else ""
+            print("%d Function%s with ID%s %s" % (nbfuns, splural, splural, consecutiveNumbers(functions)))
 
             dictDim = self.dictByDim()
             dimensions = sorted(dictDim.keys())
-            sys.stdout.write('Dimension(s): %d' % (dimensions[0]))
+            sys.stdout.write("Dimension(s): %d" % (dimensions[0]))
             for i in range(1, len(dimensions)):
-                sys.stdout.write(', %d' % (dimensions[i]))
-            sys.stdout.write('\n')
+                sys.stdout.write(", %d" % (dimensions[i]))
+            sys.stdout.write("\n")
 
             maxevals = []
             for dim in dimensions:  # max has default since Python 3.4
                 maxevals.append(int(max((d.mMaxEvals() for d in dictDim[dim]), default=-1)))
-            print('Max evals: %s' % str(maxevals))
+            print("Max evals: %s" % str(maxevals))
 
-            if opt == 'all':
-                print('Df      |     min       10      med       90      max')
-                print('--------|--------------------------------------------')
+            if opt == "all":
+                print("Df      |     min       10      med       90      max")
+                print("--------|--------------------------------------------")
                 evals = list([] for i in targets_displayed_for_info)
                 for i in self:
                     tmpevals = i.detEvals(targets_displayed_for_info)
                     for j in range(len(targets_displayed_for_info)):
                         evals[j].extend(tmpevals[j])
-                for i, j in enumerate(targets_displayed_for_info): # never aggregate over dim...
+                for i, j in enumerate(targets_displayed_for_info):  # never aggregate over dim...
                     tmp = toolsstats.prctile(evals[i], [0, 10, 50, 90, 100])
                     tmp2 = []
                     for k in tmp:
                         if not numpy.isfinite(k):
-                            tmp2.append('%8f' % k)
+                            tmp2.append("%8f" % k)
                         else:
-                            tmp2.append('%8d' % k)
-                    print('%2.1e |%s' % (j, ' '.join(tmp2)))
+                            tmp2.append("%8d" % k)
+                    print("%2.1e |%s" % (j, " ".join(tmp2)))
 
             # display distributions of final values
         else:
             print(self)
 
-    def sort(self, key1='dim', key2='funcId'):
+    def sort(self, key1="dim", key2="funcId"):
         def cmp_fun(a, b):
             if getattr(a, key1) == getattr(b, key1):
                 if getattr(a, key2) == getattr(b, key2):
                     return 0
-                return 1 if getattr(a, key2) > getattr(b, key2) else -1                
+                return 1 if getattr(a, key2) > getattr(b, key2) else -1
             else:
                 return 1 if getattr(a, key1) > getattr(b, key1) else -1
+
         sorted_self = list(sorted(self, key=functools.cmp_to_key(cmp_fun)))
         for i, ds in enumerate(sorted_self):
             self[i] = ds
         return self
-    
+
         # interested in algorithms, number of datasets, functions, dimensions
         # maxevals?, funvals?, success rate?
 
-
-    def run_length_distributions(self, dimension, target_values,
-                                 fun_list=None,  # all functions
-                                 reference_data_set_list=None,
-                                 reference_scoring_function=lambda x:
-                                        toolsstats.prctile(x, [5])[0],
-                                 data_per_target=15,
-                                 flatten_output_dict=True,
-                                 simulated_restarts=False,
-                                 bootstrap=False):
+    def run_length_distributions(
+        self,
+        dimension,
+        target_values,
+        fun_list=None,  # all functions
+        reference_data_set_list=None,
+        reference_scoring_function=lambda x: toolsstats.prctile(x, [5])[0],
+        data_per_target=15,
+        flatten_output_dict=True,
+        simulated_restarts=False,
+        bootstrap=False,
+    ):
         """return a dictionary with an entry for each algorithm, or for
         only one algorithm the dictionary value if
         ``flatten_output_dict is True``, and the left envelope
@@ -3391,7 +3419,7 @@ class DataSetList(list):
             bootstrapped within the instances/trials or via simulated
             restarts.
 
-    """
+        """
         warnings.warn("needs some testing again")
         target_values = asTargetValues(target_values)
         dsl_dict = self.dictByDim()[dimension].dictByAlg()
@@ -3410,40 +3438,28 @@ class DataSetList(list):
                 assert dimension == ds.dim
                 funcs_processed.append(ds.funcId)
                 if not simulated_restarts:
-                    evals = ds.detEvals(target_values((ds.funcId, ds.dim)),
-                                        bootstrap=bootstrap)
+                    evals = ds.detEvals(target_values((ds.funcId, ds.dim)), bootstrap=bootstrap)
                     if data_per_target is not None:
                         # make sure to get 15 numbers for each target
                         if 1 < 3:
-                            evals = [np.sort(np.asarray(d)[toolsstats.randint_derandomized(0, len(d), data_per_target)])
-                                         for d in evals]
+                            evals = [np.sort(np.asarray(d)[toolsstats.randint_derandomized(0, len(d), data_per_target)]) for d in evals]
                         else:  # this assumes that data_per_target is not smaller than nbRuns
-                            evals = [np.sort(toolsstats.fix_data_number(d, data_per_target))
-                                        for d in evals]
+                            evals = [np.sort(toolsstats.fix_data_number(d, data_per_target)) for d in evals]
                 else:
                     if isinstance(simulated_restarts, dict):
-                        evals = ds.evals_with_simulated_restarts(
-                                    target_values((ds.funcId, ds.dim)),
-                                    bootstrap=bootstrap,
-                                    **simulated_restarts)
+                        evals = ds.evals_with_simulated_restarts(target_values((ds.funcId, ds.dim)), bootstrap=bootstrap, **simulated_restarts)
                     elif 11 < 3 and bootstrap:  # TODO: to be removed, produce the bootstrap graph for dispersion estimate
                         n = ds.nbRuns()
-                        evals = ds.evals_with_simulated_restarts(target_values((ds.funcId, ds.dim)),
-                                                   samplesize=n,
-                                                   randint=np.random.randint)
+                        evals = ds.evals_with_simulated_restarts(target_values((ds.funcId, ds.dim)), samplesize=n, randint=np.random.randint)
                     else:  # manage number of samples
                         # TODO: shouldn't number of samples be set to data_per_target?
                         if simulated_restarts is not True and simulated_restarts > 0:
                             n = simulated_restarts
                         else:
                             n = (data_per_target or 0) + ds.nbRuns() + ds.bootstrap_sample_size()
-                        evals = ds.evals_with_simulated_restarts(
-                                    target_values((ds.funcId, ds.dim)),
-                                    bootstrap=bootstrap,
-                                    samplesize=n)
+                        evals = ds.evals_with_simulated_restarts(target_values((ds.funcId, ds.dim)), bootstrap=bootstrap, samplesize=n)
                     if data_per_target is not None:
-                        index = np.array(0.5 + np.linspace(0, n - 1, data_per_target, endpoint=True),
-                                         dtype=int)
+                        index = np.array(0.5 + np.linspace(0, n - 1, data_per_target, endpoint=True), dtype=int)
                         for i in range(len(evals)):
                             evals[i] = np.asarray(evals[i])[index]
                     # evals.complement_missing(data_per_target)  # add fully unsuccessful sample data
@@ -3451,27 +3467,22 @@ class DataSetList(list):
                 if reference_data_set_list is not None:
                     if ds.funcId not in reference_scores:
                         if reference_scoring_function is None:
-                            reference_scores[ds.funcId] = \
-                                reference_data_set_list.det_best_data(
-                                target_values((ds.funcId, ds.dim)),
-                                ds.funcId, ds.dim, number=data_per_target)
+                            reference_scores[ds.funcId] = reference_data_set_list.det_best_data(
+                                target_values((ds.funcId, ds.dim)), ds.funcId, ds.dim, number=data_per_target
+                            )
                         else:
-                            reference_scores[ds.funcId] = \
-                                reference_data_set_list.det_best_data_lines(
-                                target_values((ds.funcId, ds.dim)),
-                                ds.funcId, ds.dim, reference_scoring_function)[1]
+                            reference_scores[ds.funcId] = reference_data_set_list.det_best_data_lines(
+                                target_values((ds.funcId, ds.dim)), ds.funcId, ds.dim, reference_scoring_function
+                            )[1]
                             # value checking, could also be done later
                             for i, val in enumerate(reference_scores[ds.funcId]):
                                 if not np.isfinite(val) and any(np.isfinite(evals[i])):
-                                    raise ValueError('reference_value is not finite')
+                                    raise ValueError("reference_value is not finite")
                                     # a possible solution would be to set ``val = 1``
-                            reference_scores[ds.funcId] = \
-                                np.asarray([data_per_target * [val]
-                                    for val in reference_scores[ds.funcId]])
+                            reference_scores[ds.funcId] = np.asarray([data_per_target * [val] for val in reference_scores[ds.funcId]])
                         for i, line in enumerate(reference_scores[ds.funcId]):
-                            reference_scores[ds.funcId][i] = \
-                                np.sort(np.asarray(line)[toolsstats.randint_derandomized(0, len(line), data_per_target)])
-                                # np.sort(toolsstats.fix_data_number(line, data_per_target))
+                            reference_scores[ds.funcId][i] = np.sort(np.asarray(line)[toolsstats.randint_derandomized(0, len(line), data_per_target)])
+                            # np.sort(toolsstats.fix_data_number(line, data_per_target))
                     ref_scores.append(np.hstack(reference_scores[ds.funcId]))
                     # 'needs to be checked', qqq
 
@@ -3482,9 +3493,9 @@ class DataSetList(list):
 
             funcs_processed.sort()
             funcs_solved.sort()
-            assert [int(n) for n in np.__version__.split('.')] > [1, 4, 0], (
-                "for older versions of numpy, replacing `nan` with `inf`"
-                " might work for sorting here")
+            assert [int(n) for n in np.__version__.split(".")] > [1, 4, 0], (
+                "for older versions of numpy, replacing `nan` with `inf` might work for sorting here"
+            )
             rld_data = np.hstack(rld_data)
             if reference_data_set_list is not None:
                 ref_scores = np.hstack(ref_scores)
@@ -3502,25 +3513,21 @@ class DataSetList(list):
 
             # check consistency
             if len(funcs_processed) > len(set(funcs_processed)):
-                warnings.warn("function processed twice "
-                              + str(funcs_processed))
+                warnings.warn("function processed twice " + str(funcs_processed))
                 raise ValueError("function processed twice")
             if fun_list is not None and set(funcs_processed) != set(fun_list):
-                warnings.warn("not all functions found for " + str(alg)
-                    + " and computations disregarded " + str(ds.algId))
+                warnings.warn("not all functions found for " + str(alg) + " and computations disregarded " + str(ds.algId))
                 continue
 
             left_envelope = np.fmin(left_envelope, rld_data)  # TODO: needs to be rld_data / ref_scores after interface change
             # fails if number of computed data are different
-            rld_dict[alg] = [rld_data,
-                             sorted(funcs_solved),
-                             funcs_processed]
+            rld_dict[alg] = [rld_data, sorted(funcs_solved), funcs_processed]
             if reference_data_set_list is not None:
                 rld_dict[alg].append(ref_scores)
 
         for k, v in rld_dict.items():
             if v[2] != funcs_processed:
-                print('TODO: HERE AN ASSERTION FAILED')
+                print("TODO: HERE AN ASSERTION FAILED")
             # assert v[2] == funcs_processed  # the must all agree to the last
 
         if flatten_output_dict and len(rld_dict) == 1:
@@ -3557,8 +3564,7 @@ class DataSetList(list):
 
         return lines, scores
 
-    def det_best_data(self, target_values, fct, dim,
-                           number=15):
+    def det_best_data(self, target_values, fct, dim, number=15):
         """return a list of the ``number`` smallest evaluations over all
         data sets in ``self`` for each ``target in target_values``.
 
@@ -3586,20 +3592,16 @@ class DataSetList(list):
                 for j, instance in enumerate(ds.instancenumbers):
                     previous_val = best_dicts[i].setdefault(instance, np.inf)
                     best_dicts[i][instance] = min((previous_val, current_lines[i][j]))
-                best_lines[i] = np.sort(np.hstack(
-                    [best_lines[i], current_lines[i]]))
-                best_lines[i] = best_lines[i][:min((number,
-                                                    len(best_lines[i])))]
+                best_lines[i] = np.sort(np.hstack([best_lines[i], current_lines[i]]))
+                best_lines[i] = best_lines[i][: min((number, len(best_lines[i])))]
         # construct another best line instance-wise
         best_instances_lines = []
         for i in range(len(best_dicts)):
             vals = best_dicts[i].values()
-            best_instances_lines.append(
-                np.sort(vals)[:np.min((number, len(vals)))])
+            best_instances_lines.append(np.sort(vals)[: np.min((number, len(vals)))])
 
         if any(line is None for line in best_lines):
-            warnings.warn('best data lines not determined, (f, dim)='
-                          + str((fct, dim)))
+            warnings.warn("best data lines not determined, (f, dim)=" + str((fct, dim)))
         # print(best_lines[-1])
         # print(best_instances_lines[-1])
         # print(best_instances_lines[-1])
@@ -3608,8 +3610,7 @@ class DataSetList(list):
         return best_instances_lines
         # return best_lines
 
-    def det_best_data_lines(self, target_values, fct, dim,
-                           scoring_function=None):
+    def det_best_data_lines(self, target_values, fct, dim, scoring_function=None):
         """return a list of the respective best data lines over all data
         sets in ``self`` for each ``target in target_values`` and an
         array of the computed scores (ERT ``if scoring_function == 'ERT'``).
@@ -3636,28 +3637,21 @@ class DataSetList(list):
             if ds.funcId != fct or ds.dim != dim:
                 continue
             current_lines = ds.detEvals(target_values)
-            if scoring_function is None or scoring_function == 'ERT':
+            if scoring_function is None or scoring_function == "ERT":
                 current_scores = ds.detERT(target_values)
             else:
-                current_scores = np.asarray([scoring_function(d)
-                                           for d in current_lines])
+                current_scores = np.asarray([scoring_function(d) for d in current_lines])
             assert len(current_lines) == len(best_lines)
-            assert len(current_lines) == len(current_scores) \
-                 == len(best_scores) == len(best_lines)
-            for i in np.where(toolsdivers.less(current_scores,
-                                               best_scores))[0]:
+            assert len(current_lines) == len(current_scores) == len(best_scores) == len(best_lines)
+            for i in np.where(toolsdivers.less(current_scores, best_scores))[0]:
                 best_lines[i] = current_lines[i]
                 best_scores[i] = current_scores[i]
 
         if any(line is None for line in best_lines):
-            warnings.warn('best data lines for f%s in %s-D could not be determined'
-                          % (str(fct), str(dim)))
+            warnings.warn("best data lines for f%s in %s-D could not be determined" % (str(fct), str(dim)))
         return best_lines, best_scores
 
-    def get_sorted_algorithms(self, dimension, target_values,
-                              fun_list=None,
-                              reference_dataset_list=None,
-                              smallest_evaluation_to_use=3):
+    def get_sorted_algorithms(self, dimension, target_values, fun_list=None, reference_dataset_list=None, smallest_evaluation_to_use=3):
         """return list of the algorithms from ``self``, sorted by
         minimum loss factor in the ECDF.
 
@@ -3673,23 +3667,33 @@ class DataSetList(list):
 
         """
         warnings.warn("needs some testing")
-        rld, left_envelope = self.run_length_distributions(
-            dimension, target_values, fun_list,
-            reference_data_set_list=reference_dataset_list)
+        rld, left_envelope = self.run_length_distributions(dimension, target_values, fun_list, reference_data_set_list=reference_dataset_list)
         reference_algorithms = []
         idx = left_envelope >= smallest_evaluation_to_use
         for alg in rld:
             try:
                 if reference_dataset_list:
-                    reference_algorithms.append([alg, toolsstats.prctile(rld[alg][0][idx], [5])[0],
-                                            rld[alg], left_envelope,
-                                            toolsstats.prctile(rld[alg][0], [2, 5, 15, 25, 50], ignore_nan=False)])
+                    reference_algorithms.append(
+                        [
+                            alg,
+                            toolsstats.prctile(rld[alg][0][idx], [5])[0],
+                            rld[alg],
+                            left_envelope,
+                            toolsstats.prctile(rld[alg][0], [2, 5, 15, 25, 50], ignore_nan=False),
+                        ]
+                    )
                 else:
-                    reference_algorithms.append([alg, np.nanmin(rld[alg][0][idx] / left_envelope[idx]),
-                                            rld[alg], left_envelope,
-                                            toolsstats.prctile(rld[alg][0] / left_envelope, [2, 5, 15, 25, 50], ignore_nan=False)])
+                    reference_algorithms.append(
+                        [
+                            alg,
+                            np.nanmin(rld[alg][0][idx] / left_envelope[idx]),
+                            rld[alg],
+                            left_envelope,
+                            toolsstats.prctile(rld[alg][0] / left_envelope, [2, 5, 15, 25, 50], ignore_nan=False),
+                        ]
+                    )
             except ValueError:
-                warnings.warn(str(alg) + ' could not be processed for get_sorted_algorithms ')
+                warnings.warn(str(alg) + " could not be processed for get_sorted_algorithms ")
 
         reference_algorithms.sort(key=lambda x: x[1])
         return reference_algorithms
@@ -3699,20 +3703,19 @@ class DataSetList(list):
         reference_values_hash = None
         for dataSet in self:
             # if reference values exist
-            if dataSet.reference_values and \
-                            dataSet.dim in testbedsettings.current_testbed.reference_values_hash_dimensions:
-                key = '%d_%d' % (dataSet.funcId, dataSet.dim)
+            if dataSet.reference_values and dataSet.dim in testbedsettings.current_testbed.reference_values_hash_dimensions:
+                key = "%d_%d" % (dataSet.funcId, dataSet.dim)
                 all_reference_values[key] = dataSet.reference_values
 
             # If this is the reference algorithm then the reference values hash may exist.
             if reference_values_hash is None:
-                reference_values_hash = getattr(dataSet, 'reference_values_hash', None)
+                reference_values_hash = getattr(dataSet, "reference_values_hash", None)
 
         if not all_reference_values:
             return reference_values_hash
 
         reference_values_string = json.dumps(all_reference_values, sort_keys=True)
-        result = hashlib.sha1(reference_values_string.encode('utf-8')).hexdigest()
+        result = hashlib.sha1(reference_values_string.encode("utf-8")).hexdigest()
         # The generated hash it's very long so we truncate it.
         return result[:16]
 
@@ -3730,12 +3733,12 @@ def parseinfoold(s):
     """
     # TODO should raise some kind of error...
     # Split header into a list of key-value
-    list_kv = s.split(', ')
+    list_kv = s.split(", ")
 
     # Loop over all elements in the list and extract the relevant data.
     # We loop backward to make sure that we did not split inside quotes.
     # It could happen when the key algId and the value is a string.
-    p = re.compile('([^,=]+)=(.*)')
+    p = re.compile("([^,=]+)=(.*)")
     list_kv.reverse()
     it = iter(list_kv)
     res = []
@@ -3750,14 +3753,15 @@ def parseinfoold(s):
             elem0, elem1 = tmp.groups()
             elem0 = elem0.strip()
             elem1 = elem1.strip()
-            if elem1.startswith('\'') and elem1.endswith('\''): # HACK
-                elem1 = ('\'' + re.sub('([\'])', r'\\\1', elem1[1:-1]) + '\'')
+            if elem1.startswith("'") and elem1.endswith("'"):  # HACK
+                elem1 = "'" + re.sub("(['])", r"\\\1", elem1[1:-1]) + "'"
             elem1 = ast.literal_eval(elem1)
             res.append((elem0, elem1))
         except StopIteration:
             break
 
     return res
+
 
 def parseinfo(s):
     """Extract data from a header line in an index entry.
@@ -3772,8 +3776,8 @@ def parseinfo(s):
     p = re.compile(r'\ *([^,=]+?)\ *=\ *(".*?"|\'.*?\'|[^,]+)\ *(?=,|$)')
     res = []
     for elem0, elem1 in p.findall(s):
-        if elem1.startswith('\'') and elem1.endswith('\''): # HACK
-            elem1 = ('\'' + re.sub(r'(?<!\\)(\')', r'\\\1', elem1[1:-1]) + '\'')
+        if elem1.startswith("'") and elem1.endswith("'"):  # HACK
+            elem1 = "'" + re.sub(r"(?<!\\)(\')", r"\\\1", elem1[1:-1]) + "'"
         try:
             elem1 = ast.literal_eval(elem1)
         except:
@@ -3791,6 +3795,7 @@ def align_list(list_to_process, evals):
             list_to_process.insert(i, list_to_process[i])
 
     return list_to_process
+
 
 def set_unique_algId(ds_list, ds_list_reference, taken_ids=None):
     """on return, elements in ``ds_list`` do not have an ``algId``
@@ -3810,17 +3815,17 @@ def set_unique_algId(ds_list, ds_list_reference, taken_ids=None):
         if ds.algId in taken_ids:
             algId = ds.algId
             i = 2
-            while algId + ' ' + str(i) in taken_ids:
+            while algId + " " + str(i) in taken_ids:
                 i += 1
-            ds.algId = algId + ' ' + str(i)
+            ds.algId = algId + " " + str(i)
 
 
 def processInputArgs(args, process_background_algorithms=False):
     """Process command line arguments.
 
-    Returns several instances of :py:class:`DataSetList`, and a list of 
+    Returns several instances of :py:class:`DataSetList`, and a list of
     algorithms from a list of strings representing file and folder names,
-    see below for details. This command operates folder-wise: one folder 
+    see below for details. This command operates folder-wise: one folder
     corresponds to one algorithm.
 
     It is recommended that if a folder listed in args contain both
@@ -3871,7 +3876,7 @@ def processInputArgs(args, process_background_algorithms=False):
 def process_arguments(args, current_hash, dictAlg, dsList, sortedAlgs):
     for ialg, alg in enumerate(args):
         alg = alg.strip().rstrip(os.path.sep)  # lstrip would not be the same folder anymore
-        if alg == '':  # might cure an lf+cr problem when using cywin under Windows
+        if alg == "":  # might cure an lf+cr problem when using cywin under Windows
             continue
         if findfiles.is_recognized_repository_filetype(alg):
             # if 11 < 3:
@@ -3901,7 +3906,7 @@ def process_arguments(args, current_hash, dictAlg, dsList, sortedAlgs):
             # alg = os.path.split(i.rstrip(os.sep))[1]  # trailing slash or backslash
             # if alg == '':
             #    alg = os.path.split(os.path.split(i)[0])[1]
-            print('  using:', alg)
+            print("  using:", alg)
 
             # Prevent duplicates
             if all(i != alg for i in sortedAlgs):
@@ -3909,7 +3914,7 @@ def process_arguments(args, current_hash, dictAlg, dsList, sortedAlgs):
                 dictAlg[alg] = tmpDsList
         elif os.path.isfile(alg):
             # TODO: a zipped tar file should be unzipped here, see findfiles.py
-            txt = 'The post-processing cannot operate on the single file ' + str(alg)
+            txt = "The post-processing cannot operate on the single file " + str(alg)
             warnings.warn(txt)
             continue
         else:
@@ -3918,7 +3923,6 @@ def process_arguments(args, current_hash, dictAlg, dsList, sortedAlgs):
 
 
 def store_reference_values(ds_list):
-
     dict_alg = ds_list.dictByAlg()
     for key, value in dict_alg.items():
         testbedsettings.update_reference_values(key[0], value.get_reference_values_hash())
@@ -3927,28 +3931,29 @@ def store_reference_values(ds_list):
 class DictAlg(OrderedDict):
     def __init__(self, d=()):
         OrderedDict.__init__(self, d)  # was: super.__init(d)
-        
+
     def by_dim(self):
-        return dictAlgByDim(self) # TODO: put here actual implementation
+        return dictAlgByDim(self)  # TODO: put here actual implementation
+
 
 def dictAlgByDim(dictAlg):
     """Returns a dictionary with problem dimension as key from
-    a dictionary of DataSet lists. 
+    a dictionary of DataSet lists.
 
-    The input argument is a dictionary with algorithm names as 
+    The input argument is a dictionary with algorithm names as
     keys and a list of :py:class:`DataSet` instances as values.
     The resulting dictionary will have dimension as key and as values
     dictionaries with algorithm names as keys.
 
     """
-    # should become: 
+    # should become:
     # return DictAlg(dictAlg).by_dim()
-    
+
     res = {}
 
     # get the set of problem dimensions
     dims = set()
-    tmpdictAlg = {} # will store DataSet by alg and dim
+    tmpdictAlg = {}  # will store DataSet by alg and dim
     for alg, dsList in dictAlg.items():
         tmp = dsList.dictByDim()
         tmpdictAlg[alg] = tmp
@@ -3963,9 +3968,9 @@ def dictAlgByDim(dictAlg):
             elif testbedsettings.current_testbed:
                 try:  # TODO: this is at the wrong place in the dictAlgByDim function
                     if d in testbedsettings.current_testbed.dimensions_to_display[:-1]:
-                        warning_txts += ['No data for algorithm %s in %d-D.'
-                                         % (alg, d)]
-                except AttributeError: pass
+                        warning_txts += ["No data for algorithm %s in %d-D." % (alg, d)]
+                except AttributeError:
+                    pass
             # try:
             #     tmp = tmpdictAlg[alg][d]
             # except KeyError:
@@ -3974,20 +3979,19 @@ def dictAlgByDim(dictAlg):
             #     warnings.warn(txt)
 
             if alg in res.setdefault(d, {}):
-                warning_txts += ['Duplicate data for algorithm %s in %d-D.'
-                                 % (alg, d)]
+                warning_txts += ["Duplicate data for algorithm %s in %d-D." % (alg, d)]
 
             res.setdefault(d, OrderedDict()).setdefault(alg, tmp)
             # Only the first data for a given algorithm in a given dimension
 
-    #for alg, dsList in dictAlg.items():
-        #for i in dsList:
-            #res.setdefault(i.dim, {}).setdefault(alg, DataSetList()).append(i)
+    # for alg, dsList in dictAlg.items():
+    # for i in dsList:
+    # res.setdefault(i.dim, {}).setdefault(alg, DataSetList()).append(i)
 
     if warning_txts and genericsettings.verbose:
-        warnings.warn('The following warnings appeared at least once: {}\n'
-                      .format(collections.Counter(warning_txts)))
+        warnings.warn("The following warnings appeared at least once: {}\n".format(collections.Counter(warning_txts)))
     return res
+
 
 def dictAlgByDim2(dictAlg, remove_empty=False):
     """Returns a dictionary with problem dimension as key.
@@ -4020,6 +4024,7 @@ def dictAlgByDim2(dictAlg, remove_empty=False):
 
     return res
 
+
 def dictAlgByFun(dictAlg, agg_cons=False):
     """Returns a dictionary with function id as key.
 
@@ -4048,19 +4053,18 @@ def dictAlgByFun(dictAlg, agg_cons=False):
                 tmp = tmpdictAlg[alg][f]
             except KeyError:
                 if genericsettings.warning_level >= 10:
-                    txt = ('No data for algorithm %s on function %d.'
-                        % (alg, f)) # This message is misleading.
+                    txt = "No data for algorithm %s on function %d." % (alg, f)  # This message is misleading.
                     warnings.warn(txt)
 
             if alg in res.setdefault(f, {}):
-                txt = ('Duplicate data for algorithm %s on function %d-D.'
-                       % (alg, f))
+                txt = "Duplicate data for algorithm %s on function %d-D." % (alg, f)
                 warnings.warn(txt)
 
             res.setdefault(f, OrderedDict()).setdefault(alg, tmp)
             # Only the first data for a given algorithm in a given dimension
 
     return res
+
 
 def dictAlgByNoi(dictAlg):
     """Returns a dictionary with noise group as key.
@@ -4082,30 +4086,29 @@ def dictAlgByNoi(dictAlg):
         ng |= set(tmp.keys())
 
     for n in ng:
-        stmp = ''
-        if n == 'nzall':
-            stmp = 'noisy'
-        elif n == 'noiselessall':
-            stmp = 'noiseless'
+        stmp = ""
+        if n == "nzall":
+            stmp = "noisy"
+        elif n == "noiselessall":
+            stmp = "noiseless"
 
         for alg in dictAlg:
             tmp = DataSetList()
             try:
                 tmp = tmpdictAlg[alg][n]
             except KeyError:
-                txt = ('No data for algorithm %s on %s function.'
-                       % (alg, stmp))
+                txt = "No data for algorithm %s on %s function." % (alg, stmp)
                 warnings.warn(txt)
 
             if alg in res.setdefault(n, {}):
-                txt = ('Duplicate data for algorithm %s on %s functions.'
-                       % (alg, stmp))
+                txt = "Duplicate data for algorithm %s on %s functions." % (alg, stmp)
                 warnings.warn(txt)
 
             res.setdefault(n, OrderedDict()).setdefault(alg, tmp)
             # Only the first data for a given algorithm in a given dimension
 
     return res
+
 
 def dictAlgByFuncGroup(dictAlg):
     """Returns a dictionary with function group as key.
@@ -4131,13 +4134,11 @@ def dictAlgByFuncGroup(dictAlg):
             try:
                 tmp = tmpdictAlg[alg][g]
             except KeyError:
-                txt = ('No data for algorithm %s on %s functions.'
-                       % (alg, g))
+                txt = "No data for algorithm %s on %s functions." % (alg, g)
                 warnings.warn(txt)
 
             if alg in res.setdefault(g, {}):
-                txt = ('Duplicate data for algorithm %s on %s functions.'
-                       % (alg, g))
+                txt = "Duplicate data for algorithm %s on %s functions." % (alg, g)
                 warnings.warn(txt)
 
             res.setdefault(g, OrderedDict()).setdefault(alg, tmp)
@@ -4145,5 +4146,5 @@ def dictAlgByFuncGroup(dictAlg):
 
     return res
 
-# TODO: these functions should go to different modules. E.g. tools.py and toolsstats.py renamed as stats.py
 
+# TODO: these functions should go to different modules. E.g. tools.py and toolsstats.py renamed as stats.py

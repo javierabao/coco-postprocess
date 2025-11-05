@@ -8,13 +8,16 @@ import warnings
 import numpy as np
 from . import genericsettings
 
+
 def _has_len(thing):
-    try: len(thing)
-    except TypeError: return False
+    try:
+        len(thing)
+    except TypeError:
+        return False
     return True
 
-def fix_data_number(data, ndata=15,
-                       last_elements_randomized=True, warn=False):
+
+def fix_data_number(data, ndata=15, last_elements_randomized=True, warn=False):
     """Obsolete and subject to removal. Use instead
     ``np.asarray(data)[randint_derandomized(0, len(data), ndata)]`` or
     ``[data[i] for i in randint_derandomized(0, len(data), ndata)]``.
@@ -42,8 +45,7 @@ def fix_data_number(data, ndata=15,
         return data
     len_ = len(data)
     if warn:
-        warnings.warn(str([len_, ndata]) +
-                      ' actual and desired number of data disagree')
+        warnings.warn(str([len_, ndata]) + " actual and desired number of data disagree")
     if len_ > ndata:
         if last_elements_randomized:
             return np.random.permutation(data)[:ndata]
@@ -54,9 +56,9 @@ def fix_data_number(data, ndata=15,
     if len(data) < ndata:
         # append some permuted original data
         if last_elements_randomized:
-            few_data = np.random.permutation(data[:len_])[:ndata-len(data)]
+            few_data = np.random.permutation(data[:len_])[: ndata - len(data)]
         else:
-            few_data = data[:ndata-len(data)]
+            few_data = data[: ndata - len(data)]
         data = np.hstack([data, few_data])
     assert len(data) == ndata
     return data
@@ -74,7 +76,7 @@ def sp1(data, maxvalue=np.inf, issuccessful=None):
         is defined successful if it is truly smaller than maxvalue
       issuccessful -- None or array of same length as data. Entry
          i in data is defined successful, if issuccessful[i] is
-         True or non-zero 
+         True or non-zero
 
     Returns: (SP1, success_rate, nb_of_successful_entries), where
       SP1 is the mean over successful entries in data divided
@@ -83,23 +85,22 @@ def sp1(data, maxvalue=np.inf, issuccessful=None):
     """
 
     # check input args
-    if not getattr(data, '__iter__', False):  # is not iterable
-        raise Exception('data must be a sequence')
+    if not getattr(data, "__iter__", False):  # is not iterable
+        raise Exception("data must be a sequence")
     if issuccessful is not None:
-        if not getattr(issuccessful, '__iter__', False):  # is not iterable
-            raise Exception('issuccessful must be a sequence or None')
+        if not getattr(issuccessful, "__iter__", False):  # is not iterable
+            raise Exception("issuccessful must be a sequence or None")
         if len(issuccessful) != len(data):
-            raise Exception('lengths of data and issuccessful disagree')
+            raise Exception("lengths of data and issuccessful disagree")
 
     # remove NaNs
     if issuccessful is not None:
-        issuccessful = [issuccessful[i] for i in range(len(issuccessful))
-                        if not np.isnan(data[i])]
+        issuccessful = [issuccessful[i] for i in range(len(issuccessful)) if not np.isnan(data[i])]
     dat = [d for d in data if not np.isnan(d)]
     N = len(dat)
 
     if N == 0:
-        return(np.nan, np.nan, np.nan)
+        return (np.nan, np.nan, np.nan)
 
     # remove unsuccessful data
     if issuccessful is not None:
@@ -110,9 +111,10 @@ def sp1(data, maxvalue=np.inf, issuccessful=None):
 
     # return
     if succ == 0:
-        return (np.inf, 0., 0)
+        return (np.inf, 0.0, 0)
     else:
         return (np.mean(dat) / succ, succ, len(dat))
+
 
 def sp(data, maxvalue=np.inf, issuccessful=None, allowinf=True):
     """sp(data, issuccessful=None) computes the sum of the function
@@ -138,24 +140,23 @@ def sp(data, maxvalue=np.inf, issuccessful=None, allowinf=True):
     # TODO allowinf is obsolete
 
     # check input args
-    if not getattr(data, '__iter__', False):  # is not iterable
-        raise Exception('data must be a sequence')
+    if not getattr(data, "__iter__", False):  # is not iterable
+        raise Exception("data must be a sequence")
     if issuccessful is not None:
-        if not getattr(issuccessful, '__iter__', False):  # is not iterable
-            raise Exception('issuccessful must be a sequence or None')
+        if not getattr(issuccessful, "__iter__", False):  # is not iterable
+            raise Exception("issuccessful must be a sequence or None")
         if len(issuccessful) != len(data):
-            raise Exception('lengths of data and issuccessful disagree')
+            raise Exception("lengths of data and issuccessful disagree")
 
     # remove NaNs
     if issuccessful is not None:
-        issuccessful = [issuccessful[i] for i in range(len(issuccessful))
-                        if not np.isnan(data[i])]
+        issuccessful = [issuccessful[i] for i in range(len(issuccessful)) if not np.isnan(data[i])]
     dat = [d for d in data if not np.isnan(d)]
     N = len(dat)
     # dat.sort()  # this was a bug when later testing for issuccessful, possibly leading to a wrong success rate if the data also contains nan values (introduced July 2017, removed July 2025)
 
     if N == 0:
-        return(np.nan, np.nan, np.nan)
+        return (np.nan, np.nan, np.nan)
 
     # remove unsuccessful data, we never use succdat though, only len(succdat)
     if issuccessful is not None:
@@ -175,15 +176,16 @@ def sp(data, maxvalue=np.inf, issuccessful=None, allowinf=True):
 
     return (res, succ, len(succdat))
 
+
 def drawSP_from_dataset(data_set, ftarget, percentiles, samplesize=genericsettings.simulated_runlength_bootstrap_sample_size):
-    """returns ``(percentiles, all_sampled_values_sorted)`` of simulated 
-    runlengths to reach ``ftarget`` based on a ``DataSet`` class instance, 
-    specifically:: 
-     
+    """returns ``(percentiles, all_sampled_values_sorted)`` of simulated
+    runlengths to reach ``ftarget`` based on a ``DataSet`` class instance,
+    specifically::
+
         evals = data_set.detEvals([ftarget])[0] # likely to be 15 "data points"
         idx_nan = np.isnan(evals)  # nan == did not reach ftarget
         return drawSP(evals[~idx_nan], data_set.maxevals[idx_nan], percentiles, samplesize)
-    
+
     The expected value of ``all_sampled_values_sorted`` is the expected
     runtime ERT, as obtained by ``data_set.detERT([ftarget])[0]``.
 
@@ -193,15 +195,15 @@ def drawSP_from_dataset(data_set, ftarget, percentiles, samplesize=genericsettin
     try:
         evals = data_set.detEvals([ftarget])[0]
     except AttributeError:
-        print('drawSP_from_dataset expects a DataSet instance as first input, was: ' + str(type(data_set)))
-        raise 
+        print("drawSP_from_dataset expects a DataSet instance as first input, was: " + str(type(data_set)))
+        raise
     nanidx = np.isnan(evals)
     return drawSP(evals[~nanidx], data_set.maxevals[nanidx], percentiles, data_set.bootstrap_sample_size(samplesize))
 
-def drawSP_from_dataset_new(data_set, ftarget, dummy,
-                            samplesize=genericsettings.simulated_runlength_bootstrap_sample_size):
+
+def drawSP_from_dataset_new(data_set, ftarget, dummy, samplesize=genericsettings.simulated_runlength_bootstrap_sample_size):
     """new implementation, old interface (which should also change at some point)
-    
+
     returns (None, evals), that is, no percentiles, only the data=runtimes=evals
     """
     raise NotImplementedError()
@@ -209,9 +211,8 @@ def drawSP_from_dataset_new(data_set, ftarget, dummy,
     # the second call makes a long list with all repetitions
     return (None, data_set.evals_with_restarts([ftarget], sample_size_per_runtime)())
 
-def drawSP(runlengths_succ, runlengths_unsucc, percentiles,
-           samplesize=genericsettings.simulated_runlength_bootstrap_sample_size,
-           derandomized=True):
+
+def drawSP(runlengths_succ, runlengths_unsucc, percentiles, samplesize=genericsettings.simulated_runlength_bootstrap_sample_size, derandomized=True):
     """Returns the percentiles of the bootstrapped distribution of
     'simulated' running lengths of successful runs.
 
@@ -236,31 +237,35 @@ def drawSP(runlengths_succ, runlengths_unsucc, percentiles,
     See also: `simulated_evals`.
 
     """
-    # TODO: for efficiency reasons a special treatment in the case, 
+    # TODO: for efficiency reasons a special treatment in the case,
     #   where all runs are successful and all_sampled_values_sorted is not needed
 
     Nsucc = len(runlengths_succ)
     Nunsucc = len(runlengths_unsucc)
-    
+
     if Nsucc == 0:
-        raise NotImplementedError('this code has been removed as it was not clear whether it makes sense')
+        raise NotImplementedError("this code has been removed as it was not clear whether it makes sense")
         # return (np.inf*np.array(percentiles), )
         # TODO: the following line does not work because of the use of function sum which interface is different than that of sp or sp1
-        return (draw(runlengths_unsucc, percentiles, samplesize=samplesize, 
-                     func=sum
-                     # func=lambda x: [sum(x)]
-                     ), sorted(runlengths_unsucc))
+        return (
+            draw(
+                runlengths_unsucc,
+                percentiles,
+                samplesize=samplesize,
+                func=sum,
+                # func=lambda x: [sum(x)]
+            ),
+            sorted(runlengths_unsucc),
+        )
     # if Nunsucc == 0: # Special case: all success, how can we improve efficiency?
-    #    return 
-    if 11 < 3 and Nunsucc == 0:  # not tested yet: draw each once without replacement and repeat  
+    #    return
+    if 11 < 3 and Nunsucc == 0:  # not tested yet: draw each once without replacement and repeat
         idx = np.random.shuffle(range(Nsucc))
         arrStats = [runlengths_succ[idx[i % Nsucc]] for i in range(int(samplesize))]
         arrStats.sort()  # could be avoided
-        return (prctile(runlengths_succ, percentiles, issorted=False),
-            arrStats)
+        return (prctile(runlengths_succ, percentiles, issorted=False), arrStats)
     if 11 < 3 and Nunsucc == 0:  # not tested yet: bootstraps, but more efficient
-        arrStats = [runlengths_succ[np.random.randint(Nsucc)] 
-                      for i in range(int(samplesize))]
+        arrStats = [runlengths_succ[np.random.randint(Nsucc)] for i in range(int(samplesize))]
         arrStats.sort()  # could be avoided
         return (prctile(arrStats, percentiles, issorted=True), arrStats)
 
@@ -289,8 +294,7 @@ def drawSP(runlengths_succ, runlengths_unsucc, percentiles,
         sumdata += sdata[idx - Nu]  # add evals of the successful run
         arrStats.append(sumdata)  # We know we have one success here.
     arrStats.sort()
-    return (prctile(arrStats, percentiles, issorted=True),
-            arrStats)
+    return (prctile(arrStats, percentiles, issorted=True), arrStats)
 
 
 def randint_derandomized(low, high=None, size=None):
@@ -319,6 +323,7 @@ def randint_derandomized(low, high=None, size=None):
     """
     return np.asarray(list(_randint_derandomized_generator(low, high, size)))
 
+
 def _randint_derandomized_generator(low, high=None, size=None):
     """the generator for `randint_derandomized`"""
     if high is None:
@@ -333,11 +338,15 @@ def _randint_derandomized_generator(low, high=None, size=None):
             if delivered >= size:
                 break
 
-def simulated_evals(evals, nfails,
-            samplesize=genericsettings.simulated_runlength_bootstrap_sample_size,
-            randint=randint_derandomized,
-            randintrest=np.random.randint,
-            return_as=sorted):
+
+def simulated_evals(
+    evals,
+    nfails,
+    samplesize=genericsettings.simulated_runlength_bootstrap_sample_size,
+    randint=randint_derandomized,
+    randintrest=np.random.randint,
+    return_as=sorted,
+):
     """Return `samplesize` "simulated" run lengths (#evaluations).
 
     Input:
@@ -378,8 +387,7 @@ def simulated_evals(evals, nfails,
     #     [1, 1, 3, 3, 7, 9, 11, 17, 107, 115, 209, 427, 445]
 
     if nfails > len(evals):
-        raise ValueError("argument values nfails={0}>{1}=len(evals) are not consistent"
-                         .format(nfails, len(evals)))
+        raise ValueError("argument values nfails={0}>{1}=len(evals) are not consistent".format(nfails, len(evals)))
     samplesize = int(samplesize)
     evals = np.asarray(evals)
     if nfails == -1:
@@ -407,8 +415,7 @@ def simulated_evals(evals, nfails,
         indices = randintrest(0, len(evals), len(failing))
         sums[failing] += evals[indices]
         # keep failing indices
-        failing = [failing[i] for i in range(len(failing))
-                               if indices[i] >= len(evals) - nfails]
+        failing = [failing[i] for i in range(len(failing)) if indices[i] >= len(evals) - nfails]
     return return_as(sums)  # convert array
 
 
@@ -427,7 +434,7 @@ def draw(data, percentiles, samplesize=1e3, func=sp1, args=()):
         procedure is due to the interface of the performance computation
         methods sp1 and sp.
       - *samplesize* -- number of bootstraps drawn, default is 1e3,
-        for more reliable values choose rather 1e4. 
+        for more reliable values choose rather 1e4.
         performance is linear in samplesize, 0.2s for samplesize=1000.
 
     Return:
@@ -440,7 +447,7 @@ def draw(data, percentiles, samplesize=1e3, func=sp1, args=()):
         >> print(res[0])
 
     .. note::
-       NaN-values are also bootstrapped, but disregarded for the 
+       NaN-values are also bootstrapped, but disregarded for the
        calculation of percentiles which can lead to somewhat
        unexpected results.
 
@@ -474,14 +481,14 @@ def draw(data, percentiles, samplesize=1e3, func=sp1, args=()):
 
     arrStats.sort()
 
-    return (prctile(arrStats, percentiles, issorted=True),
-            arrStats)
+    return (prctile(arrStats, percentiles, issorted=True), arrStats)
+
 
 def prctile(x, arrprctiles, issorted=False, ignore_nan=True):
     """Computes percentile based on data with linear interpolation
 
     :keyword sequence data: (list, array) of data values
-    :keyword prctiles: percentiles to be calculated. Values beyond the 
+    :keyword prctiles: percentiles to be calculated. Values beyond the
                        interval [0,100] also return the respective
                        extreme value in data.
     :type prctiles: scalar or sequence
@@ -502,13 +509,12 @@ def prctile(x, arrprctiles, issorted=False, ignore_nan=True):
     [1.0, 1.5, 2.5, nan, nan]
 
     """
-    if not getattr(arrprctiles, '__iter__', False):  # is not iterable
+    if not getattr(arrprctiles, "__iter__", False):  # is not iterable
         arrprctiles = (arrprctiles,)
         # makes a tuple even if the arrprctiles is not iterable
 
     # remove None and NaNs and sort
-    x = [d for d in x
-         if d is not None and (not ignore_nan or not np.isnan(d))]
+    x = [d for d in x if d is not None and (not ignore_nan or not np.isnan(d))]
     if not issorted:
         x = np.array(x)  # lists do not guaranty a proper sort of nan
         x.sort()  # nan are sorted to the end (since numpy 1.4.0 ~2013)
@@ -518,7 +524,7 @@ def prctile(x, arrprctiles, issorted=False, ignore_nan=True):
         return [np.nan for a in arrprctiles]
     res = []
     for p in arrprctiles:
-        i = -0.5 + (p / 100.) * N
+        i = -0.5 + (p / 100.0) * N
         ilow = int(np.floor(i))
         ihigh = int(np.ceil(i))
         if i <= 0:
@@ -537,14 +543,16 @@ def prctile(x, arrprctiles, issorted=False, ignore_nan=True):
             res += [(ihigh - i) * x[ilow] + (i - ilow) * x[ihigh]]
     return res
 
+
 def randint(upper, n):
     res = np.floor(upper * np.random.rand(n))
     if any(res >= upper):
-        raise Exception('np.random.rand returned 1')
+        raise Exception("np.random.rand returned 1")
     return res
 
+
 def ranksum_statistic(N1, N2):
-    """Returns the U test statistic of the rank-sum (Mann-Whitney-Wilcoxon) test. 
+    """Returns the U test statistic of the rank-sum (Mann-Whitney-Wilcoxon) test.
 
     http://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U
     Small sample sizes (direct method).
@@ -556,20 +564,21 @@ def ranksum_statistic(N1, N2):
     # TODO: deal with more general type of sorting.
     s1 = sorted(N1)
     s2 = sorted(N2)
-    U = 0.
+    U = 0.0
     for i in s1:
-        Ui = 0.  # increment of U
+        Ui = 0.0  # increment of U
         for j in s2:
             if j < i:
-                Ui += 1.
+                Ui += 1.0
             elif j == i:
-                Ui += .5
+                Ui += 0.5
             else:
                 break
         # if Ui == 0.:
-            # break
+        # break
         U += Ui
     return U
+
 
 ###############################################################################
 # Copyrights from Gary Strangman due to inclusion of his code for the ranksumtest
@@ -584,10 +593,10 @@ def ranksum_statistic(N1, N2):
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -595,6 +604,7 @@ def ranksum_statistic(N1, N2):
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+
 
 def zprob(z):
     """Returns the area under the normal curve 'to the left of' the given z value.
@@ -612,23 +622,71 @@ def zprob(z):
     Usage:   azprob(z)    where z is a z-value
 
     """
+
     def yfunc(y):
-        x = (((((((((((((-0.000045255659 * y
-                         + 0.000152529290) * y - 0.000019538132) * y
-                       - 0.000676904986) * y + 0.001390604284) * y
-                     - 0.000794620820) * y - 0.002034254874) * y
-                   + 0.006549791214) * y - 0.010557625006) * y
-                 + 0.011630447319) * y - 0.009279453341) * y
-               + 0.005353579108) * y - 0.002141268741) * y
-             + 0.000535310849) * y + 0.999936657524
+        x = (
+            (
+                (
+                    (
+                        (
+                            (
+                                (
+                                    (
+                                        (
+                                            (
+                                                (((-0.000045255659 * y + 0.000152529290) * y - 0.000019538132) * y - 0.000676904986) * y
+                                                + 0.001390604284
+                                            )
+                                            * y
+                                            - 0.000794620820
+                                        )
+                                        * y
+                                        - 0.002034254874
+                                    )
+                                    * y
+                                    + 0.006549791214
+                                )
+                                * y
+                                - 0.010557625006
+                            )
+                            * y
+                            + 0.011630447319
+                        )
+                        * y
+                        - 0.009279453341
+                    )
+                    * y
+                    + 0.005353579108
+                )
+                * y
+                - 0.002141268741
+            )
+            * y
+            + 0.000535310849
+        ) * y + 0.999936657524
         return x
 
     def wfunc(w):
-        x = ((((((((0.000124818987 * w
-                    - 0.001075204047) * w + 0.005198775019) * w
-                  - 0.019198292004) * w + 0.059054035642) * w
-                - 0.151968751364) * w + 0.319152932694) * w
-              - 0.531923007300) * w + 0.797884560593) * np.sqrt(w) * 2.0
+        x = (
+            (
+                (
+                    (
+                        (
+                            ((((0.000124818987 * w - 0.001075204047) * w + 0.005198775019) * w - 0.019198292004) * w + 0.059054035642) * w
+                            - 0.151968751364
+                        )
+                        * w
+                        + 0.319152932694
+                    )
+                    * w
+                    - 0.531923007300
+                )
+                * w
+                + 0.797884560593
+            )
+            * np.sqrt(w)
+            * 2.0
+        )
         return x
 
     Z_MAX = 6.0  # maximum meaningful z-value
@@ -639,15 +697,16 @@ def zprob(z):
     prob = np.where(np.greater(z, 0), (x + 1) * 0.5, (1 - x) * 0.5)
     return prob
 
+
 def ranksumtest(x, y):
-    """Calculates the rank sum statistics for the two input data sets 
-    ``x`` and ``y`` and returns z and p. 
-    
+    """Calculates the rank sum statistics for the two input data sets
+    ``x`` and ``y`` and returns z and p.
+
     This method returns a slight difference compared to scipy.stats.ranksumtest
     in the two-tailed p-value. Should be test drived...
 
     Returns: z-value for first data set ``x`` and two-tailed p-value
-    
+
     """
     x, y = map(np.asarray, (x, y))
     n1 = len(x)
@@ -662,6 +721,7 @@ def ranksumtest(x, y):
     z = (s - expected) / np.sqrt(n1 * n2 * (n1 + n2 + 1) / 12.0)
     prob = 2 * (1.0 - zprob(abs(z)))
     return z, prob
+
 
 def rankdata(a):
     """Ranks the data in a, dealing with ties appropriately.
@@ -699,6 +759,7 @@ def rankdata(a):
             dupcount = 0
     return newarray
 
+
 def significancetest(entry0, entry1, targets):
     """Compute the rank-sum test between two data sets.
 
@@ -706,10 +767,10 @@ def significancetest(entry0, entry1, targets):
     algorithms are compared. The result of a significance test is
     computed on the number of function evaluations for reaching the
     target or, if not available, the function values for the smallest
-    budget in an unsuccessful trial. 
-    
-    Known bugs: this is not a fair comparison, because the successful 
-    trials could be very long.  
+    budget in an unsuccessful trial.
+
+    Known bugs: this is not a fair comparison, because the successful
+    trials could be very long.
 
     :keyword DataSet entry0: -- data set 0
     :keyword DataSet entry1: -- data set 1
@@ -734,11 +795,11 @@ def significancetest(entry0, entry1, targets):
     # one of the entry is an instance of BestAlgDataSet
     for entry in (entry0, entry1):
         tmp = entry.detEvals(targets)
-        if 'funvals' not in entry.__dict__ and 'indicator' not in entry.__dict__:  # this looks like a terrible hack
+        if "funvals" not in entry.__dict__ and "indicator" not in entry.__dict__:  # this looks like a terrible hack
             isRefAlg = True
             # for i, j in enumerate(tmp[0]):
-                # if np.isnan(j).all():
-                    # tmp[0][i] = np.array([np.nan]*len(entry.bestfinalfunvals))
+            # if np.isnan(j).all():
+            # tmp[0][i] = np.array([np.nan]*len(entry.bestfinalfunvals))
             # Make sure that the length of elements of tmp[0] is the same as
             # that of the associated function values
             evals.append(tmp[0])
@@ -746,7 +807,7 @@ def significancetest(entry0, entry1, targets):
         else:
             evals.append(tmp)
             refalgs.append(None)
-            
+
     if not isRefAlg:
         erts = [None, None]
         erts[0] = entry0.detERT(targets)
@@ -754,18 +815,18 @@ def significancetest(entry0, entry1, targets):
         averageevals = [None, None]
         averageevals[0] = entry0.detAverageEvals(targets)
         averageevals[1] = entry1.detAverageEvals(targets)
-        if bootstraps: 
-            psucc0 = 1 - sum(np.isnan(entry0.getEvals(targets)), axis= -1) / entry0.nbRuns()
+        if bootstraps:
+            psucc0 = 1 - sum(np.isnan(entry0.getEvals(targets)), axis=-1) / entry0.nbRuns()
             psucc1 = None
             if psucc0 == 1 and psucc1 == 1:
                 bootstraps = False
 
     for i in range(len(targets)):
-        # 1. Determine FE_umin,  the minimum evals in unsuccessful trials 
+        # 1. Determine FE_umin,  the minimum evals in unsuccessful trials
         FE_umin = np.inf
 
         # if there is at least one unsuccessful run
-        if (np.isnan(evals[0][i]).any() or np.isnan(evals[1][i]).any()):
+        if np.isnan(evals[0][i]).any() or np.isnan(evals[1][i]).any():
             fvalues = []
             if isRefAlg:
                 for j, entry in enumerate((entry0, entry1)):
@@ -792,7 +853,7 @@ def significancetest(entry0, entry1, targets):
                         tmpfvalues = prevline.copy()
                         # tmpfvalues = entry.finalfunvals
                         # if (tmpfvalues != entry.finalfunvals).any():
-                            # set_trace()
+                        # set_trace()
                     fvalues.append(tmpfvalues)
             else:
                 # 1) find min_{both algorithms}(conducted FEvals in
@@ -821,10 +882,12 @@ def significancetest(entry0, entry1, targets):
                         fvalues.append(prevline)
 
         # 2. 3. 4. Collect data for the significance test:
-        curdata = []  # current data 
-        
-        try: fvalues
-        except NameError: pass
+        curdata = []  # current data
+
+        try:
+            fvalues
+        except NameError:
+            pass
         else:
             f_offset = 1.01 * min((0, min(fvalues[0]), min(fvalues[1])))  # fix for negative fvalues (which are Df-values)
         for j, entry in enumerate((entry0, entry1)):
@@ -832,42 +895,49 @@ def significancetest(entry0, entry1, targets):
             idx = np.isnan(tmp)
             idx[idx == False] += tmp[idx == False] > FE_umin
             # was not a bool before: idx = np.isnan(tmp) + (tmp > FE_umin)
-            tmp[idx == False] = np.power(tmp[idx == False], -1.)
+            tmp[idx == False] = np.power(tmp[idx == False], -1.0)
             if idx.any():
                 tmp[idx] = -fvalues[j][idx] + f_offset  # larger data is better
                 assert all(tmp[idx] <= 0), (
                     "negative Df value(s) found ({}, offset={}) in DataSet {} in significance test line {}"
-                    " for target[{}] = {}. This is a bug and may lead to a wrong significance result."
-                    .format(-tmp[idx], f_offset, entry.info_str(targets), tmp, i, targets[i]))
+                    " for target[{}] = {}. This is a bug and may lead to a wrong significance result.".format(
+                        -tmp[idx], f_offset, entry.info_str(targets), tmp, i, targets[i]
+                    )
+                )
             curdata.append(tmp)
             if np.isnan(tmp).any():
-                warnings.warn("{} contains nan values in significance test line {} for target[{}] = {}"
-                              .format(entry.info_str(targets), tmp, i, targets[i]))
+                warnings.warn(
+                    "{} contains nan values in significance test line {} for target[{}] = {}".format(entry.info_str(targets), tmp, i, targets[i])
+                )
 
         z_and_p = ranksumtest(curdata[0], curdata[1])
         if isRefAlg:
             z_and_p = list(z_and_p)  # no idea what that is for
-            z_and_p[1] /= 2.  # one-tailed p-value instead of two-tailed
-        else:  # possibly correct 
+            z_and_p[1] /= 2.0  # one-tailed p-value instead of two-tailed
+        else:  # possibly correct
             ibetter = 0 if z_and_p[0] > 0 else 1  # larger data is better
             iworse = 1 - ibetter
-            if not (erts[ibetter][i] <= erts[iworse][i] and  # inf are equal
-                (erts[ibetter][i] is np.inf or  # comparable data: only f-values are compared for significance (they are compared for the same #evals)
-                 averageevals[ibetter][i] < averageevals[iworse][i])):  # better algorithm must not have larger effort, should this take into account FE_umin?
-            # remove significance if
-            #     either ert[better] > ert[worse] or
-            #     ert[better] is finite and average_evals[better] >= average_evals[worse] (e.g. the worse has no ert but only few evals)
-            # TODO (nitpicking): shouldn't the > in the first condition be a >= (same ert is not enough to be better unless both are inf)
-            #       and the >= in the second condition be a > (same average but more successes is enough)?
-                z_and_p = (z_and_p[0], 1.0)                  
+            if not (
+                erts[ibetter][i] <= erts[iworse][i]  # inf are equal
+                and (
+                    erts[ibetter][i] is np.inf  # comparable data: only f-values are compared for significance (they are compared for the same #evals)
+                    or averageevals[ibetter][i] < averageevals[iworse][i]
+                )
+            ):  # better algorithm must not have larger effort, should this take into account FE_umin?
+                # remove significance if
+                #     either ert[better] > ert[worse] or
+                #     ert[better] is finite and average_evals[better] >= average_evals[worse] (e.g. the worse has no ert but only few evals)
+                # TODO (nitpicking): shouldn't the > in the first condition be a >= (same ert is not enough to be better unless both are inf)
+                #       and the >= in the second condition be a > (same average but more successes is enough)?
+                z_and_p = (z_and_p[0], 1.0)
 
         res.append(z_and_p)
 
     genericsettings.balance_instances = balance_instances_saved
     return res
 
-def best_alg_indices(ert_ars=None, median_finalfunvals=None,
-                     datasets=None, targets=None):
+
+def best_alg_indices(ert_ars=None, median_finalfunvals=None, datasets=None, targets=None):
     """return the index of the most promising algorithm for each target.
 
     `ert_ars` are the first criterion and computed from `datasets` and
@@ -885,8 +955,7 @@ def best_alg_indices(ert_ars=None, median_finalfunvals=None,
     best final f-values. The statistical test is later aligned to the
     largest evals where all runs have a recorded value.
     """
-    ert_ars = np.asarray([ds.detERT(targets) for ds in datasets] if ert_ars is None
-                         else ert_ars)
+    ert_ars = np.asarray([ds.detERT(targets) for ds in datasets] if ert_ars is None else ert_ars)
     best_alg_idx = ert_ars.argsort(0)[0, :]  # index of best for each target value
     for itarget, vals in enumerate(ert_ars.T):
         if not np.any(np.isfinite(vals)):  # no single run reached the target
@@ -895,22 +964,23 @@ def best_alg_indices(ert_ars=None, median_finalfunvals=None,
             best_alg_idx[itarget] = np.argsort(median_finalfunvals)[0]
     return best_alg_idx
 
+
 def significance_all_best_vs_other(datasets, targets, best_alg_idx=None):
     """:param datasets: is a list of DataSet from different algorithms, otherwise on the same function and dimension (which is not necessarily checked)
-    :param targets: is a list of target values, 
-    :param best_alg_idx:  for each target the best algorithm to be tested against the others 
-    
+    :param targets: is a list of target values,
+    :param best_alg_idx:  for each target the best algorithm to be tested against the others
+
     returns a list of ``(z, p)`` tuples, each results from the ranksum
     tests for the respective target value for each algorithm against the
     best algorithm defined from the index list. Each ``(z, p)`` is either
     the first ``z`` when ``z >= 0`` (best algorithm is worse) in which case
     ``p`` is set to 1, or, when ``z < 0``, it is the pair with the
     largest observed ``p``.
-    """ 
+    """
     if best_alg_idx is None:
         best_alg_idx = best_alg_indices(datasets=datasets, targets=targets)
         assert len(best_alg_idx) == len(targets)
-        
+
     # significance test of best given algorithm against all others
     significance_versus_others = []  # indexed by target index
     assert len(best_alg_idx) == len(targets)
@@ -920,8 +990,7 @@ def significance_all_best_vs_other(datasets, targets, best_alg_idx=None):
             for ialg in range(len(datasets)):
                 if ialg == best_alg_idx[itarget]:
                     continue
-                z_and_p2 = significancetest(datasets[ialg],
-                                            datasets[best_alg_idx[itarget]], [target])[0]
+                z_and_p2 = significancetest(datasets[ialg], datasets[best_alg_idx[itarget]], [target])[0]
                 if z_and_p2[0] >= 0:
                     # found an algorithm that is better than best_alg_idx
                     z_and_p = (z_and_p2[0], 1)
@@ -929,9 +998,10 @@ def significance_all_best_vs_other(datasets, targets, best_alg_idx=None):
                 if z_and_p is None or z_and_p2[1] > z_and_p[1]:
                     # when z was always < 0, ie all algorithms so far were indeed worse
                     # then look for strongest opponent, ie weakest p (closest to 1)
-                    z_and_p = z_and_p2 
+                    z_and_p = z_and_p2
             significance_versus_others.append(z_and_p)
     return significance_versus_others, best_alg_idx
+
 
 def fastsort(a):
     # fixme: the wording in the docstring is nonsense.
@@ -948,8 +1018,8 @@ def fastsort(a):
     as_ = a[it]
     return as_, it
 
-def sliding_window_data(data, width=2, operator=np.median,
-                        number_of_stats=0, only_finite_data=True):
+
+def sliding_window_data(data, width=2, operator=np.median, number_of_stats=0, only_finite_data=True):
     """width is an absolute number, the resulting data has
     the same length as the original data and the window width
     is between width/2 at the border and width in the middle.
@@ -961,8 +1031,7 @@ def sliding_window_data(data, width=2, operator=np.median,
     if width < 2:
         return (data, [])
     if width >= len(data):
-        warnings.warn('sliding window width %d should be smaller than ' +
-            'the number of data %d' % int(width), len(data))
+        warnings.warn("sliding window width %d should be smaller than " + "the number of data %d" % int(width), len(data))
     down = width // 2
     up = width // 2 + (width % 2)
     d = np.asarray(data)
@@ -982,16 +1051,13 @@ def sliding_window_data(data, width=2, operator=np.median,
         else:
             smoothened_data.append(operator(current_data))
         if i_last_stats > next * stats_mod:
-            stats.append([i, prctile(
-                current_data[np.isfinite(current_data)]
-                    if only_finite_data else current_data,
-                [2, 10, 25, 50, 75, 90, 98])])
+            stats.append([i, prctile(current_data[np.isfinite(current_data)] if only_finite_data else current_data, [2, 10, 25, 50, 75, 90, 98])])
             i_last_stats = 0
             next = 0.1 + 1.8 * np.random.rand()
         i_last_stats += 1
 
-    return (np.asarray(smoothened_data)
-        if isinstance(data, np.ndarray) else smoothened_data, stats)
+    return (np.asarray(smoothened_data) if isinstance(data, np.ndarray) else smoothened_data, stats)
+
 
 def equals_approximately(a, b, abs=1e-11, rel=1e-11):
     if b - abs <= a <= b + abs:
@@ -999,6 +1065,7 @@ def equals_approximately(a, b, abs=1e-11, rel=1e-11):
     if (1 - rel) * b <= a <= (1 + rel) * b:
         return True
     return False
+
 
 def in_approximately(a, list_, abs=1e-11, rel=1e-11):
     """return True if ``a`` equals approximately any of the elements
@@ -1017,7 +1084,9 @@ class Evals(object):
     def __init__(self, evals, counts):
         self.evals = evals
         self.counts = counts
+
     def __call__(self):
         return [val for i, val in enumerate(self.evals) for _ in range(self.counts[i])]
+
     def sort(self):
         raise NotImplementedError()

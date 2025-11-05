@@ -7,4 +7,3 @@ multiple algorithms:
 Contains routines for the comparison of multiple algorithms.
 
 """
-

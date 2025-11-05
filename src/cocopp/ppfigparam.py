@@ -12,6 +12,7 @@ overall conducted function evaluations in case the smallest target
 function value (1e-8) was not reached.
 
 """
+
 from __future__ import absolute_import
 import os
 import matplotlib.pyplot as plt
@@ -19,22 +20,23 @@ import numpy as np
 from . import toolsstats, testbedsettings, genericsettings, toolsdivers
 from .ppfig import save_figure, getFontSize
 
-__all__ = ['beautify', 'plot', 'read_fun_infos', 'main']
+__all__ = ["beautify", "plot", "read_fun_infos", "main"]
 
-avgstyle = dict(color='r', marker='x', markersize=20)
-medmarker = dict(linestyle='', marker='+', markersize=30, markeredgewidth=5,
-                 zorder=-1)
+avgstyle = dict(color="r", marker="x", markersize=20)
+medmarker = dict(linestyle="", marker="+", markersize=30, markeredgewidth=5, zorder=-1)
 
-colors = ('k', 'b', 'c', 'g', 'y', 'm', 'r', 'k', 'k', 'c', 'r', 'm')  # sort of rainbow style
-styles = [{'color': 'k', 'marker': 'o', 'markeredgecolor': 'k'},
-          {'color': 'b'},
-          {'color': 'c', 'marker': 'v', 'markeredgecolor': 'c'},
-          {'color': 'g'},
-          {'color': 'y', 'marker': '^', 'markeredgecolor': 'y'},
-          {'color': 'm'},
-          {'color': 'r', 'marker': 's', 'markeredgecolor': 'r'}] # sort of rainbow style
+colors = ("k", "b", "c", "g", "y", "m", "r", "k", "k", "c", "r", "m")  # sort of rainbow style
+styles = [
+    {"color": "k", "marker": "o", "markeredgecolor": "k"},
+    {"color": "b"},
+    {"color": "c", "marker": "v", "markeredgecolor": "c"},
+    {"color": "g"},
+    {"color": "y", "marker": "^", "markeredgecolor": "y"},
+    {"color": "m"},
+    {"color": "r", "marker": "s", "markeredgecolor": "r"},
+]  # sort of rainbow style
 
-refcolor = 'wheat'
+refcolor = "wheat"
 # should correspond with the colors in pprldistr.
 
 
@@ -42,9 +44,10 @@ refcolor = 'wheat'
 def read_fun_infos():
     funInfos = {}
     for id in testbedsettings.current_testbed.short_names:
-        funInfos[int(id)] = str(id) + ' ' + testbedsettings.current_testbed.short_names[id]
+        funInfos[int(id)] = str(id) + " " + testbedsettings.current_testbed.short_names[id]
     return funInfos
-    
+
+
 def beautify():
     """Customize figure presentation."""
 
@@ -62,21 +65,21 @@ def beautify():
     xmin, xmax = plt.xlim()
 
     # quadratic and cubic "grid"
-    #plt.plot((2,200), (1, 1e2), 'k:')
-    #plt.plot((2,200), (1, 1e4), 'k:')
-    #plt.plot((2,200), (1e3, 1e5), 'k:')  
-    #plt.plot((2,200), (1e3, 1e7), 'k:')
-    #plt.plot((2,200), (1e6, 1e8), 'k:')  
-    #plt.plot((2,200), (1e6, 1e10), 'k:')
+    # plt.plot((2,200), (1, 1e2), 'k:')
+    # plt.plot((2,200), (1, 1e4), 'k:')
+    # plt.plot((2,200), (1e3, 1e5), 'k:')
+    # plt.plot((2,200), (1e3, 1e7), 'k:')
+    # plt.plot((2,200), (1e6, 1e8), 'k:')
+    # plt.plot((2,200), (1e6, 1e10), 'k:')
 
     # axes limits
-    plt.ylim(10**-0.2, ymax) # Set back the previous maximum.
+    plt.ylim(10**-0.2, ymax)  # Set back the previous maximum.
 
     # ticks on axes
     # axisHandle.invert_xaxis()
     # plt.xlim(1.8, 45)                # TODO should become input arg?
-    # dimticklist = (2, 3, 4, 5, 10, 20, 40)  # TODO: should become input arg at some point? 
-    # dimannlist = (2, 3, '', 5, 10, 20, 40)  # TODO: should become input arg at some point? 
+    # dimticklist = (2, 3, 4, 5, 10, 20, 40)  # TODO: should become input arg at some point?
+    # dimannlist = (2, 3, '', 5, 10, 20, 40)  # TODO: should become input arg at some point?
     # TODO: All these should depend on one given input (xlim, ylim)
     # axisHandle.set_xticks(dimticklist)
     # axisHandle.set_xticklabels([str(n) for n in dimannlist])
@@ -84,15 +87,16 @@ def beautify():
     tmp = axisHandle.get_yticks()
     tmp2 = []
     for i in tmp:
-        tmp2.append('%d' % round(np.log10(i)))
+        tmp2.append("%d" % round(np.log10(i)))
     axisHandle.set_yticklabels(tmp2)
-    plt.ylabel('Run Lengths')
+    plt.ylabel("Run Lengths")
 
-def plot(dsList, param='dim', targets=(10., 1., 1e-1, 1e-2, 1e-3, 1e-5, 1e-8)):
+
+def plot(dsList, param="dim", targets=(10.0, 1.0, 1e-1, 1e-2, 1e-3, 1e-5, 1e-8)):
     """Generate plot of ERT vs param."""
 
     dictparam = dsList.dictByParam(param)
-    params = sorted(dictparam) # sorted because we draw lines
+    params = sorted(dictparam)  # sorted because we draw lines
 
     # generate plot from dsList
     res = []
@@ -115,28 +119,25 @@ def plot(dsList, param='dim', targets=(10., 1., 1e-1, 1e-2, 1e-3, 1e-5, 1e-8)):
             # compute ERT
             ert, srate, succ = toolsstats.sp(data, issuccessful=(unsucc == False))
             ypltdata.append(ert)
-        res.extend(plt.plot(xpltdata, ypltdata, markersize=20,
-                   zorder=len(targets) - i, **styles[i]))
+        res.extend(plt.plot(xpltdata, ypltdata, markersize=20, zorder=len(targets) - i, **styles[i]))
         # for the legend
-        plt.plot([], [], markersize=10,
-                 label=' %+d' % (np.log10(targets[i])),
-                 **styles[i])
+        plt.plot([], [], markersize=10, label=" %+d" % (np.log10(targets[i])), **styles[i])
 
     # plot median of successful runs for hardest target with a success
     for p in params:
-        for i, t in enumerate(reversed(targets)): # targets has to be from hardest to easiest
+        for i, t in enumerate(reversed(targets)):  # targets has to be from hardest to easiest
             data = rawdata[p][i]
             data = data[np.isnan(data) == False]
             if len(data) > 0:
-                median = toolsstats.prctile(data, 50.)[0]
-                res.extend(plt.plot(p, median, styles[i]['color'], **medmarker))
+                median = toolsstats.prctile(data, 50.0)[0]
+                res.extend(plt.plot(p, median, styles[i]["color"], **medmarker))
                 break
 
     # plot average number of function evaluations for the hardest target
     xpltdata = []
     ypltdata = []
     for p in params:
-        data = rawdata[p][0] # first target
+        data = rawdata[p][0]  # first target
         xpltdata.append(p)
         if (np.isnan(data) == False).all():
             tmpdata = data.copy()
@@ -144,30 +145,28 @@ def plot(dsList, param='dim', targets=(10., 1., 1e-1, 1e-2, 1e-3, 1e-5, 1e-8)):
             tmpdata[np.isnan(data)] = dictparam[p][0].maxevals[np.isnan(data)]
             tmp = np.mean(tmpdata)
         else:
-            tmp = np.nan # Check what happens when plotting NaN
+            tmp = np.nan  # Check what happens when plotting NaN
         ypltdata.append(tmp)
     res.extend(plt.plot(xpltdata, ypltdata, **avgstyle))
 
     # display numbers of successes for hardest target where there is still one success
     for p in params:
-        for i, t in enumerate(targets): # targets has to be from hardest to easiest
+        for i, t in enumerate(targets):  # targets has to be from hardest to easiest
             data = rawdata[p][i]
             unsucc = np.isnan(data)
             assert len(dictparam[p]) == 1
             data[unsucc] = dictparam[p][0].maxevals
             # compute ERT
             ert, srate, succ = toolsstats.sp(data, issuccessful=(unsucc == False))
-            if srate == 1.:
+            if srate == 1.0:
                 break
             elif succ > 0:
-                res.append(plt.text(p, ert * 1.85, "%d" % succ, axes=plt.gca(),
-                                    horizontalalignment="center",
-                                    verticalalignment="bottom"))
+                res.append(plt.text(p, ert * 1.85, "%d" % succ, axes=plt.gca(), horizontalalignment="center", verticalalignment="bottom"))
                 break
     return res
 
-def main(dsList, _targets=(10., 1., 1e-1, 1e-2, 1e-3, 1e-5, 1e-8),
-         param=('dim', 'Dimension'), is_normalized=True, outputdir='.'):
+
+def main(dsList, _targets=(10.0, 1.0, 1e-1, 1e-2, 1e-3, 1e-5, 1e-8), param=("dim", "Dimension"), is_normalized=True, outputdir="."):
     """Generates figure of ERT vs. param.
 
     This script will generate as many figures as there are functions.
@@ -191,20 +190,20 @@ def main(dsList, _targets=(10., 1., 1e-1, 1e-2, 1e-3, 1e-5, 1e-8),
                                  x values
     :keyword string outputdir: name of output directory for the image
                                files
-    
+
     """
 
     funInfos = read_fun_infos()
 
     # TODO check input parameter param
     for func, dictfunc in dsList.dictByFunc().items():
-        filename = os.path.join(outputdir,'ppfigparam_%s_f%03d' % (param[0], func))
+        filename = os.path.join(outputdir, "ppfigparam_%s_f%03d" % (param[0], func))
 
         try:
             targets = list(j[func] for j in _targets)
         except TypeError:
             targets = _targets
-        targets = sorted(targets) # from hard to easy
+        targets = sorted(targets)  # from hard to easy
 
         handles = plot(dictfunc, param[0], targets)
 
@@ -229,7 +228,7 @@ def main(dsList, _targets=(10., 1., 1e-1, 1e-2, 1e-3, 1e-5, 1e-8),
         if is_normalized:
             for i in handles:
                 try:
-                    plt.setp(i, 'ydata', plt.getp(i, 'ydata') / plt.getp(i, 'xdata'))
+                    plt.setp(i, "ydata", plt.getp(i, "ydata") / plt.getp(i, "xdata"))
                 except TypeError:
                     pass
             a.relim()
@@ -238,11 +237,11 @@ def main(dsList, _targets=(10., 1., 1e-1, 1e-2, 1e-3, 1e-5, 1e-8),
         beautify()
         plt.xlabel(param[1])
         if is_normalized:
-            plt.setp(plt.gca(), 'ylabel', plt.getp(a, 'ylabel') + ' / ' + param[1])
+            plt.setp(plt.gca(), "ylabel", plt.getp(a, "ylabel") + " / " + param[1])
 
         if func in testbedsettings.current_testbed.functions_with_legend:
             toolsdivers.legend(loc="best")
-        
+
         fontSize = getFontSize(funInfos.values())
         if func in funInfos.keys():
             a.set_title(funInfos[func], fontsize=fontSize)

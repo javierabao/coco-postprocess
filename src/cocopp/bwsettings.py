@@ -21,7 +21,7 @@ instancesOfInterest = genericsettings.instancesOfInterest
 # function-dependent target function values: hard coded here before we come up
 # with something smarter. It is supposed the number of level of difficulties
 # are the same, it is just the target function value that differs.
-#tabValsOfInterest = ({1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 10, 7: 10, 8: 10,
+# tabValsOfInterest = ({1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 10, 7: 10, 8: 10,
 #                      9: 10, 10: 10, 11: 10, 12: 10, 13: 10, 14: 10, 15: 10,
 #                      16: 10, 17: 10, 18: 10, 19: 10, 20: 10, 21: 10, 22: 10,
 #                      23: 10, 24: 10, 101: 10, 102: 10, 103: 10, 104: 10,
@@ -91,7 +91,7 @@ instancesOfInterest = genericsettings.instancesOfInterest
 #                       130: 1e-08})
 
 
-#figValsOfInterest = ({1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 10, 7: 10, 8: 10,
+# figValsOfInterest = ({1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 10, 7: 10, 8: 10,
 #                      9: 10, 10: 10, 11: 10, 12: 10, 13: 10, 14: 10, 15: 10,
 #                      16: 10, 17: 10, 18: 10, 19: 10, 20: 10, 21: 10, 22: 10,
 #                      23: 10, 24: 10, 101: 10, 102: 10, 103: 10, 104: 10,
@@ -174,14 +174,14 @@ instancesOfInterest = genericsettings.instancesOfInterest
 #                       130: 1e-08})
 
 single_target_function_values = (1e1, 1e0, 1e-1, 1e-2, 1e-4, 1e-6, 1e-8)  # one figure for each
-summarized_target_function_values = (1e0, 1e-1, 1e-3, 1e-5, 1e-7)   # all in one figure
+summarized_target_function_values = (1e0, 1e-1, 1e-3, 1e-5, 1e-7)  # all in one figure
 summarized_target_function_values = (100, 10, 1e0, 1e-1, 1e-2, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8)
-summarized_target_function_values = tuple(10**numpy.r_[-8:2:0.2]) # 1e2 and 1e-8
-#summarized_target_function_values = tuple(10**numpy.r_[-7:-1:0.2]) # 1e2 and 1e-8
-#summarized_target_function_values = tuple(10**numpy.r_[-1:2:0.2]) # easy easy
+summarized_target_function_values = tuple(10 ** numpy.r_[-8:2:0.2])  # 1e2 and 1e-8
+# summarized_target_function_values = tuple(10**numpy.r_[-7:-1:0.2]) # 1e2 and 1e-8
+# summarized_target_function_values = tuple(10**numpy.r_[-1:2:0.2]) # easy easy
 # summarized_target_function_values = (10, 1e0, 1e-1)   # all in one figure
 
-#tableconstant_target_function_values = (1e3, 1e2, 1e1, 1, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-7)
+# tableconstant_target_function_values = (1e3, 1e2, 1e1, 1, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-7)
 tableconstant_target_function_values = (1e1, 1e0, 1e-1, 1e-3, 1e-5, 1e-7)
 
 rcaxeslarger = {"labelsize": 24, "titlesize": 28.8}
@@ -194,117 +194,124 @@ rctick = {"labelsize": 20}
 rcfont = {"size": 20}
 rclegend = {"fontsize": 20}
 
-ppfigdim.styles = [{'color': 'k', 'marker': 'o', 'markeredgecolor': 'k'},
-                   {'color': 'k'},
-                   {'color': 'k', 'marker': 'v', 'markeredgecolor': 'k'},
-                   {'color': 'k'},
-                   {'color': 'k', 'marker': '^', 'markeredgecolor': 'k'},
-                   {'color': 'k'},
-                   {'color': 'k', 'marker': 's', 'markeredgecolor': 'k'}] # sort of rainbow style
-ppfigdim.refcolor = '0.9'
+ppfigdim.styles = [
+    {"color": "k", "marker": "o", "markeredgecolor": "k"},
+    {"color": "k"},
+    {"color": "k", "marker": "v", "markeredgecolor": "k"},
+    {"color": "k"},
+    {"color": "k", "marker": "^", "markeredgecolor": "k"},
+    {"color": "k"},
+    {"color": "k", "marker": "s", "markeredgecolor": "k"},
+]  # sort of rainbow style
+ppfigdim.refcolor = "0.9"
 
-pprldistr.rldStyles = ({'color': 'k', 'ls': '--'},
-                       {'color': 'k'},
-                       {'color': 'k', 'ls': '--'},
-                       {'color': 'k', 'linewidth': 3.},
-                       {'color': 'k'},
-                       {'color': 'k'},
-                       {'color': 'k'},
-                       {'color': 'k'},
-                       {'color': 'k'},
-                       {'color': 'k'},
-                       {'color': 'k'},
-                       {'color': 'k'})
-pprldistr.rldUnsuccStyles = ({'color': 'k', 'ls': '--'},
-                             {'color': 'k'},
-                             {'color': 'k', 'ls': '--'},
-                             {'color': 'k'},
-                             {'color': 'k', 'ls': '--'},
-                             {'color': 'k'},
-                             {'color': 'k', 'ls': '--'},
-                             {'color': 'k'},
-                             {'color': 'k', 'ls': '--'},
-                             {'color': 'k'},
-                             {'color': 'k', 'ls': '--'},
-                             {'color': 'k'})  # should not be too short
-pprldistr.refcolor = '0.9'
+pprldistr.rldStyles = (
+    {"color": "k", "ls": "--"},
+    {"color": "k"},
+    {"color": "k", "ls": "--"},
+    {"color": "k", "linewidth": 3.0},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+)
+pprldistr.rldUnsuccStyles = (
+    {"color": "k", "ls": "--"},
+    {"color": "k"},
+    {"color": "k", "ls": "--"},
+    {"color": "k"},
+    {"color": "k", "ls": "--"},
+    {"color": "k"},
+    {"color": "k", "ls": "--"},
+    {"color": "k"},
+    {"color": "k", "ls": "--"},
+    {"color": "k"},
+    {"color": "k", "ls": "--"},
+    {"color": "k"},
+)  # should not be too short
+pprldistr.refcolor = "0.9"
 
-pplogloss.whiskerscolor = 'k'
-pplogloss.boxescolor = 'k'
-pplogloss.medianscolor = 'k'
-pplogloss.capscolor = 'k'
-pplogloss.flierscolor = 'k'
+pplogloss.whiskerscolor = "k"
+pplogloss.boxescolor = "k"
+pplogloss.medianscolor = "k"
+pplogloss.capscolor = "k"
+pplogloss.flierscolor = "k"
 
-ppfig2.linewidth = 4.
-ppfig2.styles = [{'color': 'k', 'marker': '+', 'markeredgecolor': 'k',
-                  'markerfacecolor': 'None'},
-                 {'color': 'k', 'marker': 'v', 'markeredgecolor': 'k',
-                  'markerfacecolor': 'None'},
-                 {'color': 'k', 'marker': '*', 'markeredgecolor': 'k',
-                  'markerfacecolor': 'None'},
-                 {'color': 'k', 'marker': 'o', 'markeredgecolor': 'k',
-                  'markerfacecolor': 'None'},
-                 {'color': 'k', 'marker': 's', 'markeredgecolor': 'k',
-                  'markerfacecolor': 'None'},
-                 {'color': 'k', 'marker': 'D', 'markeredgecolor': 'k',
-                  'markerfacecolor': 'None'},
-                 {'color': 'k'},
-                 {'color': 'k'},
-                 {'color': 'k'},
-                 {'color': 'k'},
-                 {'color': 'k'},
-                 {'color': 'k'}]
+ppfig2.linewidth = 4.0
+ppfig2.styles = [
+    {"color": "k", "marker": "+", "markeredgecolor": "k", "markerfacecolor": "None"},
+    {"color": "k", "marker": "v", "markeredgecolor": "k", "markerfacecolor": "None"},
+    {"color": "k", "marker": "*", "markeredgecolor": "k", "markerfacecolor": "None"},
+    {"color": "k", "marker": "o", "markeredgecolor": "k", "markerfacecolor": "None"},
+    {"color": "k", "marker": "s", "markeredgecolor": "k", "markerfacecolor": "None"},
+    {"color": "k", "marker": "D", "markeredgecolor": "k", "markerfacecolor": "None"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+]
 
-pprldistr2.rldStyles = ({'color': 'k', 'ls': '--'},
-                        {'color': 'k'},
-                        {'color': 'k', 'ls': '--'},
-                        {'color': 'k'},
-                        {'color': 'k'},
-                        {'color': 'k'},
-                        {'color': 'k'},
-                        {'color': 'k'},
-                        {'color': 'k'},
-                        {'color': 'k'},
-                        {'color': 'k'},
-                        {'color': 'k'})
+pprldistr2.rldStyles = (
+    {"color": "k", "ls": "--"},
+    {"color": "k"},
+    {"color": "k", "ls": "--"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+    {"color": "k"},
+)
 
-ppscatter.markersize = 14.
-dim_related_colors = ('k', 'k', 'k', 'k', 'k', 'k', 'k', 'k', 'k', 'k', 'k', 'k')
+ppscatter.markersize = 14.0
+dim_related_colors = ("k", "k", "k", "k", "k", "k", "k", "k", "k", "k", "k", "k")
 
 pprldmany.fontsize = 20.0
-pprldmany.styles = [{'marker': 'o', 'linestyle': '-', 'color': 'k'},
-                    {'marker': 'd', 'linestyle': '-', 'color': 'k'},
-                    {'marker': 's', 'linestyle': '-', 'color': 'k'},
-                    {'marker': 'v', 'linestyle': '-', 'color': 'k'},
-                    {'marker': '*', 'linestyle': '-', 'color': 'k'},
-                    {'marker': 'h', 'linestyle': '-', 'color': 'k'},
-                    {'marker': '^', 'linestyle': '-', 'color': 'k'},
-                    {'marker': 'p', 'linestyle': '-', 'color': 'k'},
-                    {'marker': 'H', 'linestyle': '-', 'color': 'k'},
-                    {'marker': '<', 'linestyle': '-', 'color': 'k'},
-                    {'marker': 'D', 'linestyle': '-', 'color': 'k'},
-                    {'marker': '>', 'linestyle': '-', 'color': 'k'},
-                    {'marker': '1', 'linestyle': '-', 'color': 'k'},
-                    {'marker': '2', 'linestyle': '-', 'color': 'k'},
-                    {'marker': '3', 'linestyle': '-', 'color': 'k'},
-                    {'marker': '4', 'linestyle': '-', 'color': 'k'}]
-pprldmany.refcolor = '0.9'
+pprldmany.styles = [
+    {"marker": "o", "linestyle": "-", "color": "k"},
+    {"marker": "d", "linestyle": "-", "color": "k"},
+    {"marker": "s", "linestyle": "-", "color": "k"},
+    {"marker": "v", "linestyle": "-", "color": "k"},
+    {"marker": "*", "linestyle": "-", "color": "k"},
+    {"marker": "h", "linestyle": "-", "color": "k"},
+    {"marker": "^", "linestyle": "-", "color": "k"},
+    {"marker": "p", "linestyle": "-", "color": "k"},
+    {"marker": "H", "linestyle": "-", "color": "k"},
+    {"marker": "<", "linestyle": "-", "color": "k"},
+    {"marker": "D", "linestyle": "-", "color": "k"},
+    {"marker": ">", "linestyle": "-", "color": "k"},
+    {"marker": "1", "linestyle": "-", "color": "k"},
+    {"marker": "2", "linestyle": "-", "color": "k"},
+    {"marker": "3", "linestyle": "-", "color": "k"},
+    {"marker": "4", "linestyle": "-", "color": "k"},
+]
+pprldmany.refcolor = "0.9"
 
-ppfigs.styles = [{'marker': 'o', 'markersize': 25, 'linestyle': '-', 'color': 'k'},
-                 {'marker': 'd', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': 's', 'markersize': 25, 'linestyle': '-', 'color': 'k'},
-                 {'marker': 'v', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': '*', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': 'h', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': '^', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': 'p', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': 'H', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': '<', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': 'D', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': '>', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': '1', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': '2', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': '3', 'markersize': 30, 'linestyle': '-', 'color': 'k'},
-                 {'marker': '4', 'markersize': 30, 'linestyle': '-', 'color': 'k'}]
-ppfigs.refcolor = '0.9'
-
+ppfigs.styles = [
+    {"marker": "o", "markersize": 25, "linestyle": "-", "color": "k"},
+    {"marker": "d", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "s", "markersize": 25, "linestyle": "-", "color": "k"},
+    {"marker": "v", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "*", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "h", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "^", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "p", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "H", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "<", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "D", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": ">", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "1", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "2", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "3", "markersize": 30, "linestyle": "-", "color": "k"},
+    {"marker": "4", "markersize": 30, "linestyle": "-", "color": "k"},
+]
+ppfigs.refcolor = "0.9"

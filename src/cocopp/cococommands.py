@@ -71,12 +71,14 @@ from . import pproc as _pproc
 from . import genericsettings as _genericsettings
 from . import testbedsettings as _testbedsettings
 
+
 def true_number_of_trials(ds):
     """return number of actually conducted trials for `DataSet` `ds`"""
     if len(ds.instancenumbers) != len(ds._evals[0]) - 1:
-        _warnings.warn("DataSet {0}: instancenumbers = {1} != {2} = len(_evals[0]) - 1"
-                       .format(ds.algId, ds.instancenumbers, len(ds._evals[0]) - 1))
+        _warnings.warn("DataSet {0}: instancenumbers = {1} != {2} = len(_evals[0]) - 1".format(ds.algId, ds.instancenumbers, len(ds._evals[0]) - 1))
     return len(ds.instancenumbers)
+
+
 class DataWithFewSuccesses:
     """The `all` property is an `OrderedDict` with all ``(dimension, funcId)``-
 
@@ -95,7 +97,7 @@ class DataWithFewSuccesses:
     The first argument can be a folder or filename or any other string
     excepted by `cocopp.load` matching a single dataset or it can be a
     `DataSetList`.
-    
+
     Usage concept example::
 
         >> run_more = DataWithFewSuccesses('folder_or_file_name_for_cocopp.load').current
@@ -116,7 +118,7 @@ class DataWithFewSuccesses:
     In the experimental setup from 2009, the used budget [evaluations per
     instance] is "overestimated" by a factor of three because each instance
     is run three times to begin with.
-    
+
     TODO: When in this case a `DataSetList` is passed instead
     of a folder name, we could check whether it was instantiated with
     ``genericsettings.balance_instances == False`` which is not the default
@@ -128,34 +130,39 @@ class DataWithFewSuccesses:
     See also ``cocopp.load``.
 
     """
+
     @property
     def current(self):
-        """`OrderedDict` of ``(function, dimension)`` with budget left or otherwise all """
+        """`OrderedDict` of ``(function, dimension)`` with budget left or otherwise all"""
         return self.with_budget_left or self.all
+
     @property
     def all(self):
         """depends on attributes `minsuccesses` and `successes` only"""
-        return (_collections.OrderedDict(sorted(
-                ((ds.funcId, ds.dim),
-                 [self.evaluations[i], self.successes[i], len(ds.instancenumbers)])
-                    for i, ds in enumerate(self.dsl)
-                        if self.successes[i] < self.minsuccesses
-                        and (ds.funcId, ds.dim) not in self.exclude)))
+        return _collections.OrderedDict(
+            sorted(
+                ((ds.funcId, ds.dim), [self.evaluations[i], self.successes[i], len(ds.instancenumbers)])
+                for i, ds in enumerate(self.dsl)
+                if self.successes[i] < self.minsuccesses and (ds.funcId, ds.dim) not in self.exclude
+            )
+        )
+
     @property
     def with_budget_left(self):
         """depends on attributes `minsuccesses`, `successes`, `budget_multiplier` and `evaluations`"""
-        return _collections.OrderedDict(sorted(
-            ((ds.funcId, ds.dim),
-             [self.evaluations[i], self.successes[i], len(ds.instancenumbers)])
+        return _collections.OrderedDict(
+            sorted(
+                ((ds.funcId, ds.dim), [self.evaluations[i], self.successes[i], len(ds.instancenumbers)])
                 for i, ds in enumerate(self.dsl)
-                    if self.successes[i] < self.minsuccesses
-                    and self.evaluations[i] < self.budget_multiplier * ds.dim
-                    and (ds.funcId, ds.dim) not in self.exclude))
-    def __init__(self, folder_name, minsuccesses=9, budget_multiplier=np.inf,
-                 success_threshold=1e-8, exclude=()):
+                if self.successes[i] < self.minsuccesses
+                and self.evaluations[i] < self.budget_multiplier * ds.dim
+                and (ds.funcId, ds.dim) not in self.exclude
+            )
+        )
+
+    def __init__(self, folder_name, minsuccesses=9, budget_multiplier=np.inf, success_threshold=1e-8, exclude=()):
         """`folder_name` can also be a filename or a data entry or a `DataSetList`"""
-        self.input_parameters = {it[0]: it[1] for it in list(locals().items())
-                                 if it[0] != 'self'}  # for the record
+        self.input_parameters = {it[0]: it[1] for it in list(locals().items()) if it[0] != "self"}  # for the record
         self.minsuccesses = minsuccesses
         self.budget_multiplier = budget_multiplier
         self.exclude = exclude
@@ -170,8 +177,7 @@ class DataWithFewSuccesses:
                 self.dsl = load(folder_name)
             _genericsettings.balance_instances = _bi
             if not self.dsl:
-                _warnings.warn("Sorry, could not find any coco data in {}"
-                               .format(folder_name))
+                _warnings.warn("Sorry, could not find any coco data in {}".format(folder_name))
         self.trials = [true_number_of_trials(ds) for ds in self.dsl]
         """number of trials in each data set, for the record only"""
         self.successes = self.compute_successes().successes  # declarative assignment
@@ -180,6 +186,7 @@ class DataWithFewSuccesses:
            """
         self.evaluations = self.compute_evaluations()
         """list of average evaluations per instance for each function+dimension"""
+
     def compute_successes(self, success_threshold=None):
         """Assign `successes` attribute as a `list` of number of successful trials
 
@@ -189,25 +196,25 @@ class DataWithFewSuccesses:
         if success_threshold is not None:
             self.success_threshold = success_threshold
         try:
-            self.successes = [ds.detSuccesses([self.success_threshold], raw_values=True)[0]
-                              for ds in self.dsl]
+            self.successes = [ds.detSuccesses([self.success_threshold], raw_values=True)[0] for ds in self.dsl]
         except TypeError:  # this should never happen
-            _warnings.warn("calling `detSuccesses(..., raw_values=True)` failed, "
-                          "falling back to no argument (this should never happen)")
+            _warnings.warn("calling `detSuccesses(..., raw_values=True)` failed, falling back to no argument (this should never happen)")
             self.successes = [ds.detSuccesses([self.success_threshold])[0] for ds in self.dsl]
         return self
+
     def compute_evaluations(self):
         """assign `.evaluations` as a `list` of overall evaluations spent per instance (on average)
 
         for each function+dimension.
         """
-        self.evaluations = [sum(ds.maxevals[:true_number_of_trials(ds)])
-                            / len(set(ds.instancenumbers)) for ds in self.dsl]
+        self.evaluations = [sum(ds.maxevals[: true_number_of_trials(ds)]) / len(set(ds.instancenumbers)) for ds in self.dsl]
         # self.evaluations = [ds.detAverageEvals([self.success_threshold])[0] * ds.nbRuns() for ds in self.dsl]
         return self.evaluations
+
     def print(self):
         """return a `str` with the number of data sets with too few successes"""
-        return 'DataWithFewSuccesses: {}/{}'.format(len(self.result), len(self.dsl))
+        return "DataWithFewSuccesses: {}/{}".format(len(self.result), len(self.dsl))
+
     def __len__(self):
         return len(self.result)
 
@@ -225,6 +232,7 @@ def load(filename):
     functions of the `cocopp` module, see also `load2`.
     """
     return _DataSetList(official_archives.all.get_extended(_StringList(filename)))
+
 
 def load2(args, keep=None, remove=None, flat_list=None):
     """[WIP] return a `DataSetList` or a `dict` of `dict` of `DataSetLists`.
@@ -284,11 +292,14 @@ def load2(args, keep=None, remove=None, flat_list=None):
         return dsList2
     return _pproc.dictAlgByDim(dictAlg)
 
+
 # info on the DataSetList: algId, function, dim
+
 
 def info(dsList):
     """Display more info on an instance of DatasetList."""
     dsList.info()
+
 
 # pproc.get_DataSetList writes and loads the pickled class
 def _pickle(dsList):
@@ -297,19 +308,23 @@ def _pickle(dsList):
     # TODO this will create a folder with suffix -pickle from anywhere:
     # make sure the output folder is created at the right location
 
+
 def systeminfo():
     """Display information on the system."""
     import sys
+
     print(sys.version)
     import numpy
-    print('Numpy %s' % numpy.__version__)
+
+    print("Numpy %s" % numpy.__version__)
     import matplotlib
-    print('Matplotlib %s' % matplotlib.__version__)
+
+    print("Matplotlib %s" % matplotlib.__version__)
     try:
         from . import __version__ as version
     except:
         from cocopp import __version__ as version
-    print('cocopp %s' % version)
+    print("cocopp %s" % version)
 
 
 # do something to lead a single DataSet instead?

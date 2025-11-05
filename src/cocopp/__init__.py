@@ -115,13 +115,16 @@ __all__ = []
 archives = archiving.official_archives  # just an alias
 if archives is not None:
     data_archive = archives.all  # another alias, only for historical reasons
-    archives.link_as_attributes_in(_sys.modules['cocopp'],  # more individual aliases
-                                   except_for=['all', 'test'])
+    archives.link_as_attributes_in(
+        _sys.modules["cocopp"],  # more individual aliases
+        except_for=["all", "test"],
+    )
 
 # data_archive = 'use `archives.all` instead'
 # bbob = 'use `archives.bbob` instead'
 # bbob_noisy = 'use `archives.bbob_noisy` instead'
 # bbob_biobj = 'use `archives.bbob_biobj` instead'
+
 
 class Interface:
     """collection of the most user-relevant modules, methods and data.
@@ -138,16 +141,18 @@ class Interface:
 
     `main`: post-processing data from disk
     """
+
     @classmethod
     def dir(cls):
         """return `dict` of non-private class attribute names->values"""
-        return dict(it for it in cls.__dict__.items()
-                    if not it[0].startswith('_') and not it[0] == 'dir')
+        return dict(it for it in cls.__dict__.items() if not it[0].startswith("_") and not it[0] == "dir")
+
     archives = archives
     config = config
     genericsettings = genericsettings
     load = load
     main = main
+
 
 # clean up namespace
 del absolute_import

@@ -6,6 +6,7 @@
 This module creates a tex file with all the descriptions of the images and tables.
 
 """
+
 from __future__ import absolute_import
 import os
 
@@ -15,39 +16,35 @@ from . import genericsettings
 
 descriptions = dict()
 
+
 def getValue(key):
-    """Gets the value for the given key. 
+    """Gets the value for the given key."""
 
-    """
-
-    if (not descriptions):
-
-        htmlFile = os.path.join(os.path.dirname(os.path.realpath(__file__)), genericsettings.latex_commands_for_html + '.html')
+    if not descriptions:
+        htmlFile = os.path.join(os.path.dirname(os.path.realpath(__file__)), genericsettings.latex_commands_for_html + ".html")
         if not os.path.isfile(htmlFile):
-            return ''
-            
+            return ""
+
         with open(htmlFile) as f:
             content = f.readlines()
-        
-        currentKey = ''
+
+        currentKey = ""
         currentValue = []
         for line in content:
-            if line.startswith('###'):
+            if line.startswith("###"):
                 break
-            
-            if line.startswith('##'):
+
+            if line.startswith("##"):
                 if currentKey:
-                    descriptions[currentKey] = ' '.join(currentValue)
+                    descriptions[currentKey] = " ".join(currentValue)
                 currentKey = line.strip()
                 currentValue = []
             elif not currentKey:
                 continue
             else:
-                currentValue.append(line.strip())                
-    
+                currentValue.append(line.strip())
+
         if currentKey:
-            descriptions[currentKey] = ' '.join(currentValue)
+            descriptions[currentKey] = " ".join(currentValue)
 
-    return descriptions[key] if key in descriptions else ''
-    
-
+    return descriptions[key] if key in descriptions else ""
