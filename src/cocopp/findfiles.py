@@ -26,10 +26,9 @@ import hashlib
 from . import testbedsettings
 
 if sys.version_info[0] >= 3:
-    from urllib.request import urlretrieve
+    pass
 else:
-    from urllib import urlretrieve
-from .toolsdivers import StringList  # def StringList(list_): return list_
+    pass
 from . import genericsettings
 
 # Initialization

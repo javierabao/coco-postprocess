@@ -11,7 +11,6 @@ from __future__ import absolute_import
 
 import os
 import matplotlib.pyplot as plt
-from pdb import set_trace
 
 try:
     from matplotlib.transforms import blended_transform_factory as blend

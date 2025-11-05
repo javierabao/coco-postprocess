@@ -12,7 +12,6 @@ reference (best) ERT value (or the inverse)
 from __future__ import absolute_import, print_function
 
 import os
-from pdb import set_trace
 import numpy as np
 from matplotlib import pyplot as plt
 

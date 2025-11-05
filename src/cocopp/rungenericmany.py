@@ -11,18 +11,15 @@ from __future__ import print_function
 
 import os
 import sys
-import getopt
 import warnings
 
 from . import genericsettings, config, ppfig, testbedsettings, findfiles
 from . import pproc, pptex, pprldistr
 from .pproc import DataSetList, processInputArgs
-from .ppfig import Usage
 from .toolsdivers import prepend_to_file, strip_pathname1, str_to_latex, replace_in_file
 from .compall import pprldmany, pptables, ppfigs, ppfigcons
 from .comp2 import pprldistr2, ppscatter
 
-import matplotlib.pyplot as plt
 from .toolsdivers import print_done, get_version_label
 
 __all__ = ["main"]

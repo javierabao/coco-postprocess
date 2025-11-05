@@ -7,12 +7,11 @@ from __future__ import absolute_import, print_function
 
 import os
 import sys
-import warnings
 import numpy
 
 from .. import genericsettings, bestalg, toolsstats, pproc, ppfigparam, testbedsettings, captions, ppfig
 from ..pptex import writeFEvals2, writeFEvalsMaxPrec, tableXLaTeX, numtotext
-from ..toolsstats import significancetest, significance_all_best_vs_other, best_alg_indices
+from ..toolsstats import significance_all_best_vs_other, best_alg_indices
 from ..toolsdivers import str_to_latex, strip_pathname1, strip_pathname3, replace_in_file, get_version_label, prepend_to_file
 
 

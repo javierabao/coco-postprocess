@@ -3,8 +3,11 @@
 
 """Various tools."""
 
-import os, time, warnings
-import tempfile, shutil
+import os
+import time
+import warnings
+import tempfile
+import shutil
 from collections import OrderedDict as _OrderedDict
 import re as _re
 import numpy as np

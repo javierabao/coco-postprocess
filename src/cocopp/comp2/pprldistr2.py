@@ -6,13 +6,11 @@
 from __future__ import absolute_import
 
 import os
-import sys
 import warnings
 import numpy
 import matplotlib.pyplot as plt
 from .. import toolsstats, pproc, toolsdivers
 from ..ppfig import save_figure, consecutiveNumbers, plotUnifLogXMarkers
-from pdb import set_trace
 from six import advance_iterator
 
 # __all__ = []

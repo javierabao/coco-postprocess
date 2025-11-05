@@ -34,8 +34,6 @@ import os
 import numpy
 import numpy as np
 import warnings
-from pdb import set_trace
-import matplotlib
 from matplotlib import pyplot as plt
 
 try:
@@ -45,7 +43,6 @@ except ImportError:
     from matplotlib.transforms import blend_xy_sep_transform as blend
 from .. import genericsettings, htmldesc, ppfigparam, testbedsettings
 from ..ppfig import save_figure, getFontSize
-from .. import toolsdivers
 from .. import pproc
 from .. import captions
 

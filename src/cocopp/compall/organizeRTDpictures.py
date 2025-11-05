@@ -6,7 +6,6 @@
 import os
 import sys
 import glob
-from pdb import set_trace
 
 
 def do(dirnames):

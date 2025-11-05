@@ -4,13 +4,8 @@
 """Routines for writing TeX for tables."""
 
 from __future__ import absolute_import
-import os
-import sys
-import string
 import numpy
 
-from . import toolsstats
-from pdb import set_trace
 
 # GLOBAL VARIABLES DEFINITION
 alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"

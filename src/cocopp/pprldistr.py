@@ -45,10 +45,10 @@ from __future__ import absolute_import, print_function
 import os
 import sys
 import warnings  # I don't know what I am doing here
-import pickle, gzip
+import pickle
+import gzip
 import matplotlib.pyplot as plt
 import numpy as np
-from pdb import set_trace
 from . import genericsettings, pproc, toolsdivers
 from . import testbedsettings
 from .ppfig import consecutiveNumbers, plotUnifLogXMarkers, save_figure, logxticks

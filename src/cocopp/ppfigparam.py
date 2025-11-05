@@ -17,7 +17,7 @@ from __future__ import absolute_import
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-from . import toolsstats, testbedsettings, genericsettings, toolsdivers
+from . import toolsstats, testbedsettings, toolsdivers
 from .ppfig import save_figure, getFontSize
 
 __all__ = ["beautify", "plot", "read_fun_infos", "main"]

@@ -23,22 +23,23 @@ import sys
 import os
 import ast
 import re
-import pickle, gzip  # gzip is for future functionality: we probably never want to pickle without gzip anymore
+import pickle
+import gzip  # gzip is for future functionality: we probably never want to pickle without gzip anymore
 import warnings
 import json
 import hashlib
 import functools
 import collections
-from pdb import set_trace
 from six import string_types, advance_iterator
-import numpy, numpy as np
+import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from . import genericsettings, findfiles, toolsstats, toolsdivers
 from . import testbedsettings, dataformatsettings
 from .readalign import split, align_data, HMultiReader, VMultiReader, openfile
 from .readalign import HArrayMultiReader, VArrayMultiReader, alignArrayData
-from .ppfig import consecutiveNumbers, Usage
+from .ppfig import consecutiveNumbers
 from . import archiving
 
 do_assertion = genericsettings.force_assertions  # expensive assertions
