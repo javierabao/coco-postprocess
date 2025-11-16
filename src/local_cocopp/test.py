@@ -23,7 +23,7 @@ import shutil
 import subprocess
 import doctest
 
-from cocopp import archiving
+from local_cocopp import archiving
 
 import matplotlib  # just to make sure the following is actually done first
 

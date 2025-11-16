@@ -323,7 +323,7 @@ def systeminfo():
     try:
         from . import __version__ as version
     except:
-        from cocopp import __version__ as version
+        from local_cocopp import __version__ as version
     print("cocopp %s" % version)
 
 

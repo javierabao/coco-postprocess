@@ -12,7 +12,7 @@ import warnings
 try:
     from . import preparetexforhtml, genericsettings
 except:
-    from cocopp import preparetexforhtml, genericsettings
+    from local_cocopp import preparetexforhtml, genericsettings
 
 
 def main(args):
