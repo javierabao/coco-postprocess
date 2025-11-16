@@ -13,10 +13,10 @@ __pycache__
 .idea/
 
 build/
-src/cocopp/_version.py
-src/cocopp/**/*.dat
-src/cocopp/**/*.tdat
-src/cocopp/**/*.info
+src/local_cocopp/_version.py
+src/local_cocopp/**/*.dat
+src/local_cocopp/**/*.tdat
+src/local_cocopp/**/*.info
 dist/
 ppdata/uv.lock
 uv.lock

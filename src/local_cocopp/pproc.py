@@ -130,7 +130,7 @@ def cocofy(filename):
 
     for line in fileinput.input(filename, inplace=1):
         #       if "bbob" in line:
-        sys.stdout.write(line.replace("bbob_pproc", "cocopp"))
+        sys.stdout.write(line.replace("bbob_pproc", "local_cocopp"))
     fileinput.close()
 
 

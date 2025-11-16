@@ -116,7 +116,7 @@ archives = archiving.official_archives  # just an alias
 if archives is not None:
     data_archive = archives.all  # another alias, only for historical reasons
     archives.link_as_attributes_in(
-        _sys.modules["cocopp"],  # more individual aliases
+        _sys.modules["local_cocopp"],  # more individual aliases
         except_for=["all", "test"],
     )
 

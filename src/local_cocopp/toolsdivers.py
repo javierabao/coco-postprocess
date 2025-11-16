@@ -603,7 +603,7 @@ def path_in_package(sub_path=""):
         import importlib.resources as res
 
     try:
-        package_root_directory = res.files("cocopp")
+        package_root_directory = res.files("local_cocopp")
     except AttributeError:
         print("pip install importlib_resources or (ideally) upgrade Python to >=3.9")
         raise

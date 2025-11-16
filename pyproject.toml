@@ -51,7 +51,7 @@ Issues = "https://github.com/numbbo/coco-postprocess/issues"
 Repository = "https://github.com/numbbo/coco-postprocess"
 
 [tool.setuptools_scm]
-version_file = "src/cocopp/_version.py"
+version_file = "src/local_cocopp/_version.py"
 
 [tool.setuptools]
 include-package-data = true

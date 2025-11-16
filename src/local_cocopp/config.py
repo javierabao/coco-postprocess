@@ -35,7 +35,7 @@ np.seterr(under="ignore")  # ignore underflow
 
 # genericsettings needs a pristine copy of itself to compare
 # against so that it can output the changed settings.
-gs_spec = importlib.util.find_spec("cocopp.genericsettings")
+gs_spec = importlib.util.find_spec("local_cocopp.genericsettings")
 gs = importlib.util.module_from_spec(gs_spec)
 gs_spec.loader.exec_module(gs)
 settings.default_settings = gs
