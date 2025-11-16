@@ -16,6 +16,7 @@ import warnings
 from . import genericsettings, config, ppfig, testbedsettings, findfiles
 from . import pproc, pptex, pprldistr
 from .pproc import DataSetList, processInputArgs
+from .ppfig import save_folder_index_file
 from .toolsdivers import prepend_to_file, strip_pathname1, str_to_latex, replace_in_file
 from .compall import pprldmany, pptables, ppfigs, ppfigcons
 from .comp2 import pprldistr2, ppscatter
@@ -453,4 +454,13 @@ def main(args, outputdir):
 
     print("Output data written to folder %s" % os.path.join(os.getcwd(), many_algorithms_output))
 
+    save_folder_index_file(os.path.join(os.path.realpath(many_algorithms_output), genericsettings.many_algorithm_file_name + ".html"))
+    print("Folder index file saved %s" %
+          os.path.join(os.path.realpath(many_algorithms_output), genericsettings.many_algorithm_file_name + ".html"))
+
+    if genericsettings.isRLDistr and genericsettings.isRldOnSingleFcts:
+        single_fct_output_dir = (many_algorithms_output.rstrip(os.sep) + os.sep + "pprldmany-single-functions")
+        save_folder_index_file(os.path.join(os.path.realpath(single_fct_output_dir), f"../{genericsettings.many_algorithm_file_name}" + ".html"))
+        print("Folder index file saved %s" %
+            os.path.join(os.path.realpath(single_fct_output_dir), f"../{genericsettings.many_algorithm_file_name}" + ".html"))
     return DataSetList(dsList).dictByAlg()

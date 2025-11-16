@@ -196,7 +196,7 @@ def save_index_html_file(filename):
         f.write("\n</BODY>\n</HTML>")
 
 
-def save_folder_index_file(filename, image_file_extension):
+def save_folder_index_file(filename, image_file_extension="svg"):
     if not filename:
         return
 
@@ -320,7 +320,6 @@ def save_single_functions_html(
     caption=None,
 ):  # used only with HtmlPage.NON_SPECIFIED and PPFIGCONS1 (dynamic caption setting)
     name = filename.split(os.sep)[-1]
-    current_dir = os.path.dirname(os.path.realpath(filename))
     with open(filename + add_to_names + ".html", "w") as f:
         header_title = algname + ", " + name + add_to_names
         links = get_parent_link(htmlPage, parentFileName)
@@ -490,9 +489,6 @@ def save_single_functions_html(
     toolsdivers.replace_in_file(
         filename + add_to_names + ".html", "??COCOVERSION??", "<br />Data produced with COCO %s" % (toolsdivers.get_version_label(None))
     )
-
-    if parentFileName:
-        save_folder_index_file(os.path.join(current_dir, parentFileName + ".html"), extension)
 
 
 def write_dimension_links(dimension, dimensions, index):

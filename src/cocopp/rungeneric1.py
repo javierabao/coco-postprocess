@@ -25,7 +25,7 @@ import numpy as np
 
 from . import genericsettings, testbedsettings, config, ppfig, pptable, pprldistr, ppfigdim, ppfigcons1, pplogloss, findfiles
 from .pproc import DataSetList, store_reference_values, dictAlgByDim
-from .ppfig import Usage
+from .ppfig import Usage, save_folder_index_file
 from .toolsdivers import print_done, prepend_to_file, strip_pathname1, str_to_latex, get_version_label, replace_in_file
 from . import ppconverrorbars
 from .compall import pprldmany, ppfigs
@@ -268,4 +268,13 @@ def main(alg, outputdir, argv=None):
     )
     print("Output data written to folder %s" % os.path.join(os.getcwd(), algoutputdir))
 
+    save_folder_index_file(os.path.join(os.path.realpath(algoutputdir), genericsettings.single_algorithm_file_name + ".html"))
+    print("Folder index file saved %s" %
+         os.path.join(os.path.realpath(algoutputdir), genericsettings.single_algorithm_file_name + ".html"))
+
+    if genericsettings.isRLDistr and genericsettings.isRldOnSingleFcts:
+        single_fct_output_dir = (algoutputdir.rstrip(os.sep) + os.sep + "pprldmany-single-functions")
+        save_folder_index_file(os.path.join(os.path.realpath(single_fct_output_dir), f"../{genericsettings.single_algorithm_file_name}" + ".html"))
+        print("Folder index file saved %s" %
+            os.path.join(os.path.realpath(single_fct_output_dir), f"../{genericsettings.single_algorithm_file_name}" + ".html"))
     return dsList.dictByAlg()
