@@ -458,9 +458,4 @@ def main(args, outputdir):
     print("Folder index file saved %s" %
           os.path.join(os.path.realpath(many_algorithms_output), genericsettings.many_algorithm_file_name + ".html"))
 
-    if genericsettings.isRLDistr and genericsettings.isRldOnSingleFcts:
-        single_fct_output_dir = (many_algorithms_output.rstrip(os.sep) + os.sep + "pprldmany-single-functions")
-        save_folder_index_file(os.path.join(os.path.realpath(single_fct_output_dir), f"../{genericsettings.many_algorithm_file_name}" + ".html"))
-        print("Folder index file saved %s" %
-            os.path.join(os.path.realpath(single_fct_output_dir), f"../{genericsettings.many_algorithm_file_name}" + ".html"))
     return DataSetList(dsList).dictByAlg()
