@@ -37,14 +37,11 @@ def grouped_ecdf_graphs(alg_dict, order, output_dir, function_groups, settings, 
         dictDim = pproc.dictAlgByDim(tmpdictAlg)
         dims = sorted(dictDim)
 
-        ppfig.save_single_functions_html(
-            os.path.join(output_dir, genericsettings.pprldmany_file_name),
-            "",  # algorithms names are clearly visible in the figure
-            dimensions=dims,
-            htmlPage=ppfig.HtmlPage.PPRLDMANY_BY_GROUP_MANY,
-            function_groups=function_groups,
-            parentFileName=parent_file_name,
-        )
+        mgr = ppfig.get_report_manager()
+        if mgr is None:
+            mgr = ppfig.initialize_report_manager(output_dir, title="Comparison of Algorithms", auto_open_browser=genericsettings.verbose)
+        mgr.create_page(genericsettings.pprldmany_file_name, page_type=ppfig.hrm.PageType.ECDF_PLOT, page_title="Runtime profiles (grouped)")
+        mgr.add_link_to_index("ECDFs", "Runtime profiles (grouped)", f"{genericsettings.pprldmany_file_name}.html")
 
         for i, d in enumerate(dims):
             entries = dictDim[d]
@@ -131,6 +128,13 @@ def main(args, outputdir):
         if genericsettings.verbose:
             print("Folder %s was created." % many_algorithms_output)
 
+    # Initialize HTML report manager for incremental updates
+    ppfig.initialize_report_manager(
+        many_algorithms_output,
+        title="Comparison of Algorithms",
+        auto_open_browser=genericsettings.verbose  # Open in browser during verbose mode
+    )
+
     for i in dictAlg:
         if genericsettings.isNoisy and not genericsettings.isNoiseFree:
             dictAlg[i] = dictAlg[i].dictByNoise().get("nzall", DataSetList())
@@ -161,43 +165,25 @@ def main(args, outputdir):
                 )
                 last_incorrect_instances = curr_instances
 
-    ppfig.copy_static_files(many_algorithms_output)
+    mgr = ppfig.get_report_manager()
+    if mgr is None:
+        mgr = ppfig.initialize_report_manager(many_algorithms_output, title="Comparison of Algorithms", auto_open_browser=genericsettings.verbose)
+    mgr.copy_static_files()
 
-    ppfig.save_single_functions_html(
-        os.path.join(many_algorithms_output, genericsettings.many_algorithm_file_name),
-        "",  # algorithms names are clearly visible in the figure
-        htmlPage=ppfig.HtmlPage.MANY,
-        function_groups=dictAlg[sortedAlgs[0]].getFuncGroups(),
-    )
+    mgr.create_page(genericsettings.many_algorithm_file_name, page_type=ppfig.hrm.PageType.MULTI_ALGORITHM, page_title="Comparison Results")
+    mgr.add_link_to_index("Comparison", "Comparison Results", f"{genericsettings.many_algorithm_file_name}.html")
 
-    ppfig.save_single_functions_html(
-        os.path.join(many_algorithms_output, genericsettings.ppfigs_file_name),
-        "",  # algorithms names are clearly visible in the figure
-        htmlPage=ppfig.HtmlPage.PPFIGS,
-        function_groups=dictAlg[sortedAlgs[0]].getFuncGroups(),
-        parentFileName=genericsettings.many_algorithm_file_name,
-    )
+    mgr.create_page(genericsettings.ppfigs_file_name, page_type=ppfig.hrm.PageType.DIMENSION_COMPARISON, page_title="Scaling with dimension")
+    mgr.add_link_to_index("Comparison", "Scaling with dimension", f"{genericsettings.ppfigs_file_name}.html")
 
     dimensions = sorted(pproc.dictAlgByDim(dictAlg))
 
     if testbedsettings.current_testbed.has_constraints:
-        ppfig.save_single_functions_html(
-            os.path.join(many_algorithms_output, genericsettings.ppfigcons_file_name),
-            "",  # algorithms names are clearly visible in the figure
-            dimensions=dimensions,
-            htmlPage=ppfig.HtmlPage.PPFIGCONS,
-            function_groups=dictAlg[sortedAlgs[0]].getFuncGroups(),
-            parentFileName=genericsettings.many_algorithm_file_name,
-        )
+        mgr.create_page(genericsettings.ppfigcons_file_name, page_type=ppfig.hrm.PageType.DIMENSION_COMPARISON, page_title="Scaling with constraints")
+        mgr.add_link_to_index("Comparison", "Scaling with constraints", f"{genericsettings.ppfigcons_file_name}.html")
 
-    ppfig.save_single_functions_html(
-        os.path.join(many_algorithms_output, genericsettings.pptables_file_name),
-        "",  # algorithms names are clearly visible in the figure
-        dimensions=dimensions,
-        htmlPage=ppfig.HtmlPage.PPTABLES,
-        function_groups=dictAlg[sortedAlgs[0]].getFuncGroups(),
-        parentFileName=genericsettings.many_algorithm_file_name,
-    )
+    mgr.create_page(genericsettings.pptables_file_name, page_type=ppfig.hrm.PageType.TABLE_COMPARISON, page_title="Tables for selected targets")
+    mgr.add_link_to_index("Comparison", "Tables for selected targets", f"{genericsettings.pptables_file_name}.html")
 
     # empirical cumulative distribution functions (ECDFs) aka Data profiles
     if genericsettings.isRLDistr:
@@ -223,13 +209,11 @@ def main(args, outputdir):
             algorithm_name1 = str_to_latex(strip_pathname1(sortedAlgs[1]))
 
             algorithm_name = "%s vs %s" % (algorithm_name1, algorithm_name0)
-            ppfig.save_single_functions_html(
-                os.path.join(many_algorithms_output, genericsettings.pprldistr2_file_name),
-                algname=algorithm_name,
-                htmlPage=ppfig.HtmlPage.PPRLDISTR2,
-                function_groups=ds_list0.getFuncGroups(),
-                parentFileName=genericsettings.many_algorithm_file_name,
-            )
+            mgr = ppfig.get_report_manager()
+            if mgr is None:
+                mgr = ppfig.initialize_report_manager(many_algorithms_output, title="Comparison of Algorithms", auto_open_browser=genericsettings.verbose)
+            mgr.create_page(genericsettings.pprldistr2_file_name, page_type=ppfig.hrm.PageType.ECDF_PLOT, page_title=algorithm_name)
+            mgr.add_link_to_index("Comparison", algorithm_name, f"{genericsettings.pprldistr2_file_name}.html")
 
             # ECDFs of ERT ratios
             dic_dim0 = ds_list0.dictByDim()
@@ -388,13 +372,11 @@ def main(args, outputdir):
                             entries, order=sortedAlgs, outputdir=single_fct_output_dir, info=("f%03d_%02dD" % (fg, d)), settings=genericsettings
                         )
 
-                    ppfig.save_single_functions_html(
-                        os.path.join(single_fct_output_dir, genericsettings.pprldmany_file_name),
-                        "",  # algorithms names are clearly visible in the figure
-                        dimensions=dims,
-                        htmlPage=ppfig.HtmlPage.NON_SPECIFIED,
-                        header=ppfig.pprldmany_per_func_dim_header,
-                    )
+                    mgr = ppfig.get_report_manager()
+                    if mgr is None:
+                        mgr = ppfig.initialize_report_manager(single_fct_output_dir, title="Comparison of Algorithms", auto_open_browser=genericsettings.verbose)
+                    mgr.create_page(genericsettings.pprldmany_file_name, page_type=ppfig.hrm.PageType.ECDF_PLOT, page_title=ppfig.pprldmany_per_func_dim_header)
+                    mgr.add_link_to_index("ECDFs", ppfig.pprldmany_per_func_dim_header, "pprldmany.html")
         print_done()
 
     if genericsettings.isTab:
@@ -422,13 +404,11 @@ def main(args, outputdir):
         algorithm_name1 = str_to_latex(strip_pathname1(sortedAlgs[1]))
 
         algorithm_name = "%s vs %s" % (algorithm_name1, algorithm_name0)
-        ppfig.save_single_functions_html(
-            os.path.join(many_algorithms_output, genericsettings.ppscatter_file_name),
-            algname=algorithm_name,
-            htmlPage=ppfig.HtmlPage.PPSCATTER,
-            function_groups=ds_list0.getFuncGroups(),
-            parentFileName=genericsettings.many_algorithm_file_name,
-        )
+        mgr = ppfig.get_report_manager()
+        if mgr is None:
+            mgr = ppfig.initialize_report_manager(many_algorithms_output, title="Comparison of Algorithms", auto_open_browser=genericsettings.verbose)
+        mgr.create_page(genericsettings.ppscatter_file_name, page_type=ppfig.hrm.PageType.SCATTER_PLOT, page_title=algorithm_name)
+        mgr.add_link_to_index("Comparison", algorithm_name, f"{genericsettings.ppscatter_file_name}.html")
 
         html_file_name = os.path.join(many_algorithms_output, genericsettings.ppscatter_file_name + ".html")
 

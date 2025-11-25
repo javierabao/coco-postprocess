@@ -537,7 +537,10 @@ def main(dsList, _valuesOfInterest, outputdir):
             parentFileName=genericsettings.single_algorithm_file_name,
         )
 
-    ppfig.copy_static_files(outputdir)
+    mgr = ppfig.get_report_manager()
+    if mgr is None:
+        mgr = ppfig.initialize_report_manager(outputdir, auto_open_browser=False)
+    mgr.copy_static_files()
 
     funInfos = ppfigparam.read_fun_infos()
     fontSize = ppfig.getFontSize(funInfos.values())  # noqa: F841

@@ -13,12 +13,15 @@ from itertools import groupby
 import warnings
 import numpy as np
 from matplotlib import pyplot as plt
-import shutil
 from six import advance_iterator
 # from pdb import set_trace
 
 # absolute_import => . refers to where ppfig resides in the package:
-from . import genericsettings, testbedsettings, toolsstats, htmldesc, toolsdivers
+from . import genericsettings, testbedsettings, toolsstats, toolsdivers
+from . import html_report_manager as hrm
+
+# Global report manager instance (optional)
+_report_manager = None
 
 
 # CLASS DEFINITIONS
@@ -151,104 +154,72 @@ def add_image(image_name, add_link_to_image, height=160):
 
 
 def format_link_list_entry_in_html(s):
-    """format an html text line by appending the <br> tag (was: by the <H3> tag)"""
-    return s + "<br>\n"  # the previous format was '<H3>{}</H3>\n'.format(s)
+    """Deprecated helper: formatting for legacy link lists.
+
+    Returns a simple HTML-formatted line. Prefer using HtmlReportManager
+    APIs to register links to the index instead of manipulating raw HTML.
+    """
+    return s + "<br>\n"
 
 
 def add_link(current_dir, folder, file_name, label, indent="", ignore_file_exists=False, dimension=None):
+    """Deprecated: legacy link formatter retained for compatibility.
+
+    This no longer writes or checks files on disk. It simply returns a
+    formatted link string. New code should use `HtmlReportManager.add_link_to_index`.
+    """
     if folder:
-        path = os.path.join(os.path.realpath(current_dir), folder, file_name)
         href = "%s/%s" % (folder, file_name)
     else:
-        path = os.path.join(os.path.realpath(current_dir), file_name)
         href = file_name
 
-    if ignore_file_exists or os.path.isfile(path):
-        return format_link_list_entry_in_html('{}<a href="{}{}">{}</a>'.format(indent, href, "#" + str(dimension) if dimension else "", label))
-
-    return ""
+    return format_link_list_entry_in_html('{}<a href="{}{}">{}</a>'.format(indent, href, "#" + str(dimension) if dimension else "", label))
 
 
 def save_index_html_file(filename):
-    with open(filename + ".html", "w") as f:
-        text = ""
-        f.write(html_header % tuple(2 * ["COCO Post-Processing Results"] + [text]))
+    """Deprecated: delegate index creation to HtmlReportManager.
 
-        current_dir = os.path.dirname(os.path.realpath(filename))
-        indent = "&nbsp;&nbsp;"
+    If a global report manager exists it will be asked to save the index
+    and any registered pages. Otherwise a temporary manager is
+    initialized in the directory of `filename` and used for the save.
+    """
+    mgr = get_report_manager()
+    if mgr is None:
+        outdir = os.path.dirname(os.path.realpath(filename)) or os.getcwd()
+        mgr = initialize_report_manager(outdir, title="COCO Post-Processing Results", auto_open_browser=False)
 
-        comparison_links = ""
-        many_algorithm_file = "%s.html" % genericsettings.many_algorithm_file_name
-        for root, _dirs, files in os.walk(current_dir):
-            for elem in sorted(_dirs):
-                comparison_links += add_link(current_dir, elem, many_algorithm_file, elem, indent)
-
-        if comparison_links:
-            f.write("<H2>Comparison data</H2>\n")
-            f.write(comparison_links)
-
-        f.write("<H2>Single algorithm data</H2>\n")
-        single_algorithm_file = "%s.html" % genericsettings.single_algorithm_file_name
-        for root, _dirs, files in os.walk(current_dir):
-            for elem in sorted(_dirs):
-                f.write(add_link(current_dir, elem, single_algorithm_file, elem, indent))
-
-        f.write("\n</BODY>\n</HTML>")
+    try:
+        mgr.save_all()
+    except Exception as e:
+        warnings.warn("Failed to save index via HtmlReportManager: %s" % str(e))
 
 
 def save_folder_index_file(filename, image_file_extension):
+    """Deprecated wrapper that delegates to HtmlReportManager save/copy operations.
+
+    Historically this function wrote a per-folder index in-place. The new
+    approach centralizes index management in `HtmlReportManager`. This
+    wrapper will initialize/use the global manager and request a save and
+    static asset copy.
+    """
     if not filename:
         return
 
-    current_dir = os.path.dirname(os.path.realpath(filename))
+    mgr = get_report_manager()
+    if mgr is None:
+        outdir = os.path.dirname(os.path.realpath(filename)) or os.getcwd()
+        mgr = initialize_report_manager(outdir, title="COCO Post-Processing Results", auto_open_browser=False)
 
-    links = get_home_link()
-    links += get_rld_flex_link(current_dir)
-    links += get_rld_link(current_dir)
-    links += get_convergence_link(current_dir)
-    links += add_link(current_dir, None, genericsettings.ppfigdim_file_name + ".html", "Scaling with dimension for selected targets")
-    links += add_link(current_dir, None, genericsettings.ppfigcons1_file_name + ".html", "Scaling with constraints for selected targets")
+    try:
+        mgr.copy_static_files()
+    except Exception:
+        # non-fatal
+        pass
 
-    links += add_link(current_dir, None, "pptable.html", "Tables for selected targets")
-    links += add_link(current_dir, None, "pprldistr.html", "Runtime profiles for selected targets and f-distributions")
-    links += add_link(current_dir, None, "pplogloss.html", "Runtime loss ratios")
-
-    image_file_name = "pprldmany-single-functions/pprldmany.%s" % image_file_extension
-    if os.path.isfile(os.path.join(current_dir, image_file_name)):
-        links += "<H2> %s </H2>\n" % " Runtime profiles over all targets"
-        links += add_image(image_file_name, True, 380)
-
-    links += add_link(current_dir, None, genericsettings.ppfigs_file_name + ".html", "Scaling with dimension")
-    links += add_link(current_dir, None, genericsettings.ppfigcons_file_name + ".html", "Scaling with constraints")
-    links += add_link(current_dir, None, genericsettings.pptables_file_name + ".html", "Tables for selected targets")
-    links += add_link(current_dir, None, genericsettings.ppscatter_file_name + ".html", "Scatter plots")
-    links += add_link(current_dir, None, genericsettings.pprldistr2_file_name + ".html", "Runtime profiles for selected targets and f-distributions")
-
-    # add the ECDFs aggregated over all functions in all dimensions at the end:
-    if os.path.isfile(os.path.join(current_dir, testbedsettings.current_testbed.plots_on_main_html_page[0])):
-        links += "<H2> %s </H2>\n" % " Runtime profiles over all targets"
-        i = 1  # counter to only put three plots per line
-        for plotname in testbedsettings.current_testbed.plots_on_main_html_page:
-            if os.path.isfile(os.path.join(current_dir, plotname)):
-                if i % 3 == 0:
-                    links += add_image(plotname, True, 220) + " <br />"
-                else:
-                    links += add_image(plotname, True, 220)
-                i = i + 1
-
-    lines = []
-    with open(filename) as infile:
-        for line in infile:
-            lines.append(line)
-            if links_placeholder in line:
-                lines.append("%s\n</BODY>\n</HTML>" % links)
-                break
-
-    with open(filename, "w") as outfile:
-        for line in lines:
-            outfile.write(line)
-
-    save_index_html_file(os.path.join(current_dir, "..", genericsettings.index_html_file_name))
+    try:
+        mgr.save_all()
+    except Exception as e:
+        warnings.warn("Failed to save folder index via HtmlReportManager: %s" % str(e))
 
 
 def get_home_link():
@@ -306,6 +277,11 @@ def get_parent_link(html_page, parent_file_name):
         return format_link_list_entry_in_html('<a href="{}.html">Overview page</a>'.format(parent_file_name))
     return ""
 
+# Legacy HTML helper functions removed.
+# The HtmlReportManager now handles index and per-page generation.
+# Use `initialize_report_manager()` and `get_report_manager()` to create
+# pages and add links to the index. See `html_report_manager.py`.
+
 
 def save_single_functions_html(
     filename,
@@ -315,222 +291,114 @@ def save_single_functions_html(
     dimensions=None,
     htmlPage=HtmlPage.NON_SPECIFIED,
     function_groups=None,
-    parentFileName=None,  # used only with HtmlPage.NON_SPECIFIED
-    header=None,  # used only with HtmlPage.NON_SPECIFIED
+    parentFileName=None,
+    header=None,
     caption=None,
-):  # used only with HtmlPage.NON_SPECIFIED and PPFIGCONS1 (dynamic caption setting)
-    name = filename.split(os.sep)[-1]
-    current_dir = os.path.dirname(os.path.realpath(filename))
-    with open(filename + add_to_names + ".html", "w") as f:
-        header_title = algname + ", " + name + add_to_names
-        links = get_parent_link(htmlPage, parentFileName)
+):
+    # Use HtmlReportManager to create/update the page and index.
+    mgr = get_report_manager()
+    # If no manager exists, create one in the target directory without opening browser
+    if mgr is None:
+        outdir = os.path.dirname(os.path.realpath(filename)) or os.getcwd()
+        mgr = initialize_report_manager(outdir, title="COCO Post-Processing Results", auto_open_browser=False)
 
-        f.write(html_header % (header_title.lstrip(",").strip(), algname, links))
+    name = os.path.basename(filename)
+    page_title = (algname + ", " + name + add_to_names).lstrip(",").strip()
 
-        if function_groups is None:
-            function_groups = OrderedDict([])
+    # Map HtmlPage enum to PageType strings (best-effort mapping)
+    page_type = hrm.PageType.CUSTOM
+    if htmlPage in (HtmlPage.ONE, HtmlPage.MANY):
+        page_type = hrm.PageType.SINGLE_ALGORITHM
+    elif htmlPage is HtmlPage.PPRLDMANY_BY_GROUP or htmlPage is HtmlPage.PPRLDMANY_BY_GROUP_MANY:
+        page_type = hrm.PageType.ECDF_PLOT
+    elif htmlPage is HtmlPage.PPTABLE or htmlPage is HtmlPage.PPTABLES:
+        page_type = hrm.PageType.TABLE_COMPARISON
+    elif htmlPage is HtmlPage.PPSCATTER:
+        page_type = hrm.PageType.SCATTER_PLOT
+    elif htmlPage is HtmlPage.PPFIGS or htmlPage is HtmlPage.PPFIGCONS or htmlPage is HtmlPage.PPFIGCONS1:
+        page_type = hrm.PageType.DIMENSION_COMPARISON
 
-        if not testbedsettings.current_testbed.name.startswith("bbob-constrained"):
-            function_group = "nzall" if genericsettings.isNoisy else "noiselessall"
-            if htmlPage not in (HtmlPage.PPRLDMANY_BY_GROUP, HtmlPage.PPLOGLOSS):
-                function_groups.update(OrderedDict([(function_group, "All functions")]))  # append the noiselesall group at the end
+    page = mgr.create_page(name, page_type=page_type, page_title=page_title)
 
-        first_function_number = testbedsettings.current_testbed.first_function_number
-        last_function_number = testbedsettings.current_testbed.last_function_number
-        caption_string_format = "<p/>\n%s\n<p/><p/>"
+    # Helper to add a list of images as a gallery
+    def _add_images_as_gallery(img_names, section_title="Figures"):
+        images = []
+        for img in img_names:
+            images.append((img, ""))
+        page.add_gallery(images, section_title)
 
-        if htmlPage in (HtmlPage.ONE, HtmlPage.MANY):
-            f.write(links_placeholder)
-        elif htmlPage is HtmlPage.PPSCATTER:
-            current_header = "Scatter plots per function"
-            f.write("\n<H2> %s </H2>\n" % current_header)
-            for function_number in range(first_function_number, last_function_number + 1):
-                f.write(add_image("ppscatter_f%03d%s.%s" % (function_number, add_to_names, extension), True))
-            f.write(caption_string_format % "##bbobppscatterlegend##")
+    # Build content depending on page kind (best-effort translation)
+    first_fn = testbedsettings.current_testbed.first_function_number
+    last_fn = testbedsettings.current_testbed.last_function_number
 
-        elif htmlPage is HtmlPage.PPFIGS:
-            current_header = 'Scaling of run "time" with dimension'
-            f.write("\n<H2> %s </H2>\n" % current_header)
-            for function_number in range(first_function_number, last_function_number + 1):
-                f.write(add_image("ppfigs_f%03d%s.%s" % (function_number, add_to_names, extension), True))
-            f.write(caption_string_format % "##bbobppfigslegend##")
+    if htmlPage is HtmlPage.PPSCATTER:
+        imgs = [f"ppscatter_f{fn:03d}{add_to_names}.{extension}" for fn in range(first_fn, last_fn + 1)]
+        _add_images_as_gallery(imgs, "Scatter plots per function")
 
-        elif htmlPage is HtmlPage.PPFIGCONS:
-            current_header = 'Scaling of run "time" with number of constraints'
-            f.write("\n<H2> %s </H2>\n" % current_header)
-            for function_name in testbedsettings.current_testbed.func_cons_groups.keys():
-                for dimension in dimensions if dimensions is not None else [2, 3, 5, 10, 20, 40]:
-                    f.write(add_image("ppfigcons_%s_d%s%s.%s" % (function_name, dimension, add_to_names, extension), True))
-            f.write(caption_string_format % "##bbobppfigconslegend##")
+    elif htmlPage is HtmlPage.PPFIGS:
+        imgs = [f"ppfigs_f{fn:03d}{add_to_names}.{extension}" for fn in range(first_fn, last_fn + 1)]
+        _add_images_as_gallery(imgs, 'Scaling of run "time" with dimension')
 
-        elif htmlPage is HtmlPage.PPFIGCONS1:
-            current_header = 'Scaling of run "time" with number of constraints for selected targets'
-            f.write("\n<H2> %s </H2>\n" % current_header)
-            for function_name in testbedsettings.current_testbed.func_cons_groups.keys():
-                for dimension in dimensions if dimensions is not None else [2, 3, 5, 10, 20, 40]:
-                    f.write(add_image("ppfigcons1_%s_d%s%s.%s" % (function_name, dimension, add_to_names, extension), True))
-            # caption given by caption in this case
+    elif htmlPage in (HtmlPage.PPFIGCONS, HtmlPage.PPFIGCONS1):
+        dims = dimensions if dimensions is not None else [2, 3, 5, 10, 20, 40]
+        imgs = []
+        for fname in getattr(testbedsettings.current_testbed, 'func_cons_groups', {}).keys():
+            for d in dims:
+                suffix = "" if add_to_names is None else add_to_names
+                tag = 'ppfigcons1' if htmlPage is HtmlPage.PPFIGCONS1 else 'ppfigcons'
+                imgs.append(f"{tag}_{fname}_d{d}{suffix}.{extension}")
+        _add_images_as_gallery(imgs, 'Scaling with constraints')
 
-        elif htmlPage is HtmlPage.NON_SPECIFIED:
-            current_header = header
-            f.write("\n<H2> %s </H2>\n" % current_header)
-            if dimensions is not None:
-                for index, dimension in enumerate(dimensions):
-                    f.write(write_dimension_links(dimension, dimensions, index))
-                    for function_number in range(first_function_number, last_function_number + 1):
-                        f.write(add_image("%s_f%03d_%02dD.%s" % (name, function_number, dimension, extension), True))
-            else:
-                for function_number in range(first_function_number, last_function_number + 1):
-                    f.write(add_image("%s_f%03d%s.%s" % (name, function_number, add_to_names, extension), True))
-        elif htmlPage is HtmlPage.PPRLDMANY_BY_GROUP:
-            current_header = pprldmany_per_group_dim_header
-            f.write("\n<H2> %s </H2>\n" % current_header)
-            for index, dimension in enumerate(dimensions):
-                f.write(write_dimension_links(dimension, dimensions, index))
-                for fg in function_groups:
-                    f.write(add_image("%s_%s_%02dD.%s" % (name, fg, dimension, extension), True, 200))
+    elif htmlPage is HtmlPage.NON_SPECIFIED:
+        if dimensions is not None:
+            for idx, d in enumerate(dimensions):
+                section = f"{d}-D"
+                imgs = [f"{name}_f{fn:03d}_{d:02d}D.{extension}" for fn in range(first_fn, last_fn + 1)]
+                _add_images_as_gallery(imgs, section)
+        else:
+            imgs = [f"{name}_f{fn:03d}{add_to_names}.{extension}" for fn in range(first_fn, last_fn + 1)]
+            _add_images_as_gallery(imgs, 'Figures')
 
-        elif htmlPage is HtmlPage.PPRLDMANY_BY_GROUP_MANY:
-            current_header = pprldmany_per_group_dim_header
-            f.write("\n<H2> %s </H2>\n" % current_header)
-            for index, dimension in enumerate(dimensions):
-                f.write(write_dimension_links(dimension, dimensions, index))
-                for typeKey, typeValue in function_groups.items():
-                    f.write(add_image("%s_%02dD_%s.%s" % (name, dimension, typeKey, extension), True))
+    elif htmlPage in (HtmlPage.PPRLDMANY_BY_GROUP, HtmlPage.PPRLDMANY_BY_GROUP_MANY):
+        dims = dimensions or []
+        for d in dims:
+            imgs = []
+            for key in (function_groups or OrderedDict()).keys():
+                imgs.append(f"{name}_{key}_{d:02d}D.{extension}")
+            _add_images_as_gallery(imgs, f"Runtime profiles in {d}-D")
 
-            f.write(caption_string_format % "\n##bbobECDFslegend##")
+    elif htmlPage in (HtmlPage.PPTABLE, HtmlPage.PPTABLES):
+        # Add placeholders for tables per dimension
+        for d in (dimensions or []):
+            page.add_content_to_section("Tables", f"<!--pptableHtml_{d}-->")
 
-        elif htmlPage is HtmlPage.PPTABLE:
-            current_header = "ERT in number of function evaluations"
-            f.write("<H2> %s </H2>\n" % current_header)
-            for index, dimension in enumerate(dimensions):
-                f.write(write_dimension_links(dimension, dimensions, index))
-                f.write("\n<!--pptableHtml_%d-->\n" % dimension)
-            key = "bbobpptablecaption" + testbedsettings.current_testbed.scenario
-            f.write(caption_string_format % htmldesc.getValue("##" + key + "##"))
+    elif htmlPage in (HtmlPage.PPRLDISTR, HtmlPage.PPRLDISTR2):
+        dims = getattr(testbedsettings.current_testbed, 'rldDimsOfInterest', [])
+        names = ["pprldistr", "ppfvdistr"] if htmlPage is HtmlPage.PPRLDISTR else ["pprldistr", "pplogabs"]
+        for d in dims:
+            for k in (function_groups or OrderedDict()).keys():
+                imgs = [f"{n}_{d:02d}D_{k}.{extension}" for n in names]
+                _add_images_as_gallery(imgs, f"{k} in {d}-D")
 
-        elif htmlPage is HtmlPage.PPTABLES:
-            write_tables(
-                f,
-                caption_string_format,
-                testbedsettings.current_testbed.reference_algorithm_filename,
-                "pptablesHtml",
-                "bbobpptablesmanylegend",
-                dimensions,
-            )
+    elif htmlPage is HtmlPage.PPLOGLOSS:
+        dims = getattr(testbedsettings.current_testbed, 'rldDimsOfInterest', [])
+        imgs = [f"pplogloss_{d:02d}D_{list(function_groups.keys())[0] if function_groups else 'all'}.{extension}" for d in dims]
+        _add_images_as_gallery(imgs, 'ERT loss ratios')
 
-        elif htmlPage is HtmlPage.PPRLDISTR:
-            names = ["pprldistr", "ppfvdistr"]
-            dimensions = testbedsettings.current_testbed.rldDimsOfInterest
+    # Add page link to index
+    mgr.add_link_to_index("Results", page_title, f"{name}{add_to_names}.html")
 
-            header_ecdf = "Empirical cumulative runtime profiles"
-            f.write("<H2> %s </H2>\n" % header_ecdf)
-            for dimension in dimensions:
-                for typeKey, typeValue in function_groups.items():
-                    f.write("<p><b>%s in %d-D</b></p>" % (typeValue, dimension))
-                    f.write("<div>")
-                    for name in names:
-                        f.write(add_image("%s_%02dD_%s.%s" % (name, dimension, typeKey, extension), True))
-                    f.write("</div>\n")
-
-            key = "bbobpprldistrlegend" + testbedsettings.current_testbed.scenario
-            f.write(caption_string_format % htmldesc.getValue("##" + key + "##"))
-
-        elif htmlPage is HtmlPage.PPRLDISTR2:
-            names = ["pprldistr", "pplogabs"]
-            dimensions = testbedsettings.current_testbed.rldDimsOfInterest
-
-            header_ecdf = "Empirical cumulative runtime profiles per function group"
-            f.write("\n<H2> %s </H2>\n" % header_ecdf)
-            for dimension in dimensions:
-                for typeKey, typeValue in function_groups.items():
-                    f.write("<p><b>%s in %d-D</b></p>" % (typeValue, dimension))
-                    f.write("<div>")
-                    for name in names:
-                        f.write(add_image("%s_%02dD_%s.%s" % (name, dimension, typeKey, extension), True))
-                    f.write("</div>\n")
-
-            key = "bbobpprldistrlegendtwo" + testbedsettings.current_testbed.scenario
-            f.write(caption_string_format % htmldesc.getValue("##" + key + "##"))
-
-        elif htmlPage is HtmlPage.PPLOGLOSS:
-            dimensions = testbedsettings.current_testbed.rldDimsOfInterest
-            if testbedsettings.current_testbed.reference_algorithm_filename:
-                current_header = "ERT loss ratios"
-                f.write("<H2> %s </H2>\n" % current_header)
-
-                dimension_list = "-D, ".join(str(x) for x in dimensions) + "-D"
-                index = dimension_list.rfind(",")
-                dimension_list = dimension_list[:index] + " and" + dimension_list[index + 1 :]
-
-                f.write("<p><b>%s in %s</b></p>" % ("All functions", dimension_list))
-                f.write("<div>")
-                for dimension in dimensions:
-                    f.write(add_image("pplogloss_%02dD_%s.%s" % (dimension, function_group, extension), True))
-                f.write("</div>\n")
-
-                f.write("\n<!--tables-->\n")
-                scenario = testbedsettings.current_testbed.scenario
-                f.write(caption_string_format % htmldesc.getValue("##bbobloglosstablecaption" + scenario + "##"))
-
-                for typeKey, typeValue in function_groups.items():
-                    f.write("<p><b>%s in %s</b></p>" % (typeValue, dimension_list))
-                    f.write("<div>")
-                    for dimension in dimensions:
-                        f.write(add_image("pplogloss_%02dD_%s.%s" % (dimension, typeKey, extension), True))
-                    f.write("</div>\n")
-
-                f.write(caption_string_format % htmldesc.getValue("##bbobloglossfigurecaption" + scenario + "##"))
-
-        if caption:
-            f.write(caption_string_format % caption)
-
-        f.write("\n\n{0}</BODY>\n</HTML>".format(22 * "   <BR/><BR/><BR/><BR/><BR/>\n"))  # solicit top alignment for last dimension tag
-
-    toolsdivers.replace_in_file(
-        filename + add_to_names + ".html", "??COCOVERSION??", "<br />Data produced with COCO %s" % (toolsdivers.get_version_label(None))
-    )
-
-    if parentFileName:
-        save_folder_index_file(os.path.join(current_dir, parentFileName + ".html"), extension)
+    # Save page and replace version marker
+    page.save()
+    try:
+        toolsdivers.replace_in_file(page.file_path, "??COCOVERSION??", "<br />Data produced with COCO %s" % (toolsdivers.get_version_label(None)))
+    except Exception:
+        # non-fatal
+        pass
 
 
-def write_dimension_links(dimension, dimensions, index):
-    links = '\n<p><A NAME="%d"></A>' % dimension
-    if index == 0:
-        links += '<A HREF="#%d">Last dimension</A> | ' % dimensions[-1]
-    else:
-        links += '<A HREF="#%d">Previous dimension</A> | ' % dimensions[index - 1]
-    links += '<A HREF="#%d"><b>Dimension = %d</b></A>' % (dimension, dimension)
-    if index == len(dimensions) - 1:
-        links += ' | <A HREF="#%d">First dimension</A>' % dimensions[0]
-    else:
-        links += ' | <A HREF="#%d">Next dimension</A>' % dimensions[index + 1]
-    links += "</p>\n"
-
-    return links
-
-
-def write_tables(f, caption_string_format, best_alg_exists, html_key, legend_key, dimensions):
-    current_header = "Table showing the ERT in number of evaluations"
-    if best_alg_exists:
-        current_header += " divided by the best ERT of the reference algorithm"
-
-    f.write("\n<H2> %s </H2>\n" % current_header)
-    for index, dimension in enumerate(dimensions):
-        f.write(write_dimension_links(dimension, dimensions, index))
-        f.write("\n<!--%s_%d-->\n" % (html_key, dimension))
-    key = legend_key + testbedsettings.current_testbed.scenario
-    f.write(caption_string_format % htmldesc.getValue("##" + key + "##"))
-
-
-def copy_static_files(output_dir):
-    """Copies static files to output directory."""
-
-    folder = os.path.join(toolsdivers.path_in_package(), "static")
-    for file_in_folder in os.listdir(folder):
-        shutil.copy(os.path.join(folder, file_in_folder), output_dir)
-
+# Legacy helpers for direct HTML generation removed.
+# Table/dimension/static helpers are now provided by `HtmlReportManager`.
 
 def discretize_limits(limits, smaller_steps_limit=3.1):
     """return new limits with discrete values in k * 10**i with k in [1, 3].
@@ -933,3 +801,48 @@ def getFontSize(nameList):
     maxFuncLength = max(len(i) for i in nameList)
     fontSize = 24 - max(0, 2 * ((maxFuncLength - 35) / 5))
     return fontSize
+
+
+# HTML Report Management Functions (incremental updates)
+
+def initialize_report_manager(output_dir, title="COCO Post-Processing Results", auto_open_browser=True):
+    """Initialize the global HTML report manager for incremental report generation.
+    
+    This creates an index file immediately and enables incremental HTML updates
+    as postprocessing progresses.
+    
+    Parameters:
+        output_dir: Directory where HTML files will be generated
+        title: Title for the report index
+        auto_open_browser: Whether to open the index in browser immediately
+        
+    Returns:
+        The initialized HtmlReportManager instance
+    """
+    global _report_manager
+    _report_manager = hrm.HtmlReportManager(output_dir, title, auto_open_browser, verbose=genericsettings.verbose)
+    return _report_manager
+
+
+def get_report_manager():
+    """Get the global HTML report manager instance.
+    
+    Returns:
+        The HtmlReportManager instance, or None if not initialized
+    """
+    return _report_manager
+
+
+def register_html_file_to_index(section_name, file_name, file_url):
+    """Register an HTML file to the index for incremental display.
+    
+    This allows adding links to newly generated files to the index
+    without waiting for all processing to complete.
+    
+    Parameters:
+        section_name: Section in the index where the link will appear
+        file_name: Display name for the link
+        file_url: URL path to the HTML file
+    """
+    if _report_manager is not None:
+        _report_manager.add_link_to_index(section_name, file_name, file_url)

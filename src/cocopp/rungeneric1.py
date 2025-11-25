@@ -123,6 +123,14 @@ def main(alg, outputdir, argv=None):
             os.makedirs(algoutputdir)
             if genericsettings.verbose:
                 print("Folder %s was created." % (algoutputdir))
+        
+        # Initialize HTML report manager for incremental updates
+        algfolder_name = strip_pathname1(algfolder) if isinstance(algfolder, str) else algfolder
+        ppfig.initialize_report_manager(
+            algoutputdir, 
+            title="Results for Algorithm %s" % algfolder_name,
+            auto_open_browser=genericsettings.verbose  # Open in browser during verbose mode
+        )
 
     latex_commands_file = os.path.join(outputdir, "cocopp_commands.tex")
 
@@ -135,12 +143,11 @@ def main(alg, outputdir, argv=None):
     else:
         algorithm_string = ""
     page_title = "Results%s on the <TT>%s</TT> Benchmark Suite" % (algorithm_string, dictFunc[list(dictFunc.keys())[0]][0].suite_name)
-    ppfig.save_single_functions_html(
-        os.path.join(algoutputdir, genericsettings.single_algorithm_file_name),
-        page_title,
-        htmlPage=ppfig.HtmlPage.ONE,
-        function_groups=dsList.getFuncGroups(),
-    )
+    mgr = ppfig.get_report_manager()
+    if mgr is None:
+        mgr = ppfig.initialize_report_manager(algoutputdir, title="Results for Algorithm %s" % strip_pathname1(algfolder))
+    mgr.create_page(genericsettings.single_algorithm_file_name, page_type=ppfig.hrm.PageType.SINGLE_ALGORITHM, page_title=page_title)
+    mgr.add_link_to_index("Results", page_title, f"{genericsettings.single_algorithm_file_name}.html")
 
     values_of_interest = testbedsettings.current_testbed.ppfigdim_target_values
     if genericsettings.isFig:
@@ -166,12 +173,11 @@ def main(alg, outputdir, argv=None):
         dict_dim_list = dictAlgByDim(dictAlg)
         dims = sorted(dict_dim_list)
 
-        ppfig.save_single_functions_html(
-            os.path.join(algoutputdir, "pptable"),
-            dimensions=dims,
-            htmlPage=ppfig.HtmlPage.PPTABLE,
-            parentFileName=genericsettings.single_algorithm_file_name,
-        )
+        mgr = ppfig.get_report_manager()
+        if mgr is None:
+            mgr = ppfig.initialize_report_manager(algoutputdir, title="Results for Algorithm %s" % strip_pathname1(algfolder))
+        mgr.create_page("pptable", page_type=ppfig.hrm.PageType.TABLE_COMPARISON, page_title="ERT tables")
+        mgr.add_link_to_index("Results", "ERT tables", "pptable.html")
         replace_in_file(os.path.join(algoutputdir, "pptable.html"), "??COCOVERSION??", "<br />Data produced with COCO %s" % (get_version_label(None)))
 
         for noise, sliceNoise in dictNoise.items():
